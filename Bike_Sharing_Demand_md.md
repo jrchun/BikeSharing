@@ -1,6 +1,3 @@
-output: html\_document
-======================
-
 **자전거 대여 수요예측 분석**
 =============================
 
@@ -62,7 +59,7 @@ rm(list=ls())
 #### Loading data
 
 ``` r
-setwd('C:\\github\\Study\\Project\\Bike_sharing_demand')
+setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
 colSums(is.na(train))
