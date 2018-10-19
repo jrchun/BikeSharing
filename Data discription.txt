@@ -1,0 +1,34 @@
+datetime - hourly date + timestamp  
+
+season -  	1 = spring
+		2 = summer 
+		3 = fall
+		4 = winter 
+
+holiday - whether the day is considered a holiday (ÈŞÀÏ)
+
+workingday - whether the day is neither a weekend nor holiday (ÁÖ¸»µµ, ÈŞÀÏµµ ¾Æ´Ñ ³¯)
+
+weather - 	1: Clear, Few clouds, Partly cloudy, Partly cloudy 
+
+		2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist 
+
+		3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds 
+
+		4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog 
+
+temp - temperature in Celsius(¼·¾¾) -> ½ÇÁ¦¿Âµµ.
+
+atemp - "feels like" temperature in Celsius (Ã¼°¨¿Âµµ)
+
+humidity - relative humidity (½À±â)
+
+windspeed - wind speed (Ç³¼Ó)
+
+
+-- Train¿¡¸¸ ÀÖ´Â °Í.
+* casual - number of non-registered user rentals initiated (ºñÈ¸¿øÀÇ ·»Å»¼ö)
+
+* registered - number of registered user rentals initiated (È¸¿øÀÇ ·»Å»¼ö)
+
+* count - number of total rentals (ÅäÅ»·»Æ®)
