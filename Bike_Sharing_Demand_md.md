@@ -158,10 +158,6 @@ str(data)
     ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
     ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
 
-### Plotting function by ggplot
-
-library(ggplot2) plotting\_C &lt;- function(D, X) { p1&lt;- ggplot(data = D, aes(x = X)) + geom\_bar()+ aes(fill = X) + labs(title = 'Histogram of Data' , subtitle = 'by Categorical Variable', x = 'Variable') return(p1) }
-
 #### 변수별 분석
 
 ##### datetime
@@ -235,11 +231,42 @@ ggplot(data = train) +
 
 ##### holiday
 
-str(data*h**o**l**i**d**a**y*)*u**n**i**q**u**e*(*d**a**t**a*holiday) table(data$holiday) \#binary data data$holiday\[which(data$holiday == 0)\] &lt;- 'holiday' data*h**o**l**i**d**a**y*\[*w**h**i**c**h*(*d**a**t**a*holiday == 1)\] &lt;- 'non holiday' data*h**o**l**i**d**a**y* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*holiday)
+``` r
+data$holiday[which(data$holiday == 0)] <- 'holiday'
+data$holiday[which(data$holiday == 1)] <- 'non holiday'
+data$holiday <- as.factor(data$holiday)
+str(data$holiday)
+```
 
-boxplot(data*y* *d**a**t**a*holiday)
+    ##  Factor w/ 2 levels "holiday","non holiday": 1 1 1 1 1 1 1 1 1 1 ...
 
-ggplot(data = train, aes(x = holiday, y = y)) + geom\_boxplot(aes(group = holiday)) + aes(fill = holiday) + labs(title = 'Boxplot of Data' , subtitle = 'Grouped by holiday') \#holiday 유무에 따라 평균의 큰 차이는 없으나 큰 값들이 \#상대적으로 많은 것을 확인할 수 있다.
+``` r
+table(data$holiday)
+```
+
+    ## 
+    ##     holiday non holiday 
+    ##       16879         500
+
+Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
+
+``` r
+boxplot(data$y ~ data$holiday)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
+
+``` r
+ggplot(data = train, aes(x = holiday, y = y)) +
+  geom_boxplot(aes(group = holiday)) +
+  aes(fill = holiday) +
+  labs(title = 'Boxplot of Data' ,
+       subtitle = 'Grouped by holiday')
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-2.png)
+
+Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
 ### Data Preprocessing!
 
