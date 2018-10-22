@@ -201,20 +201,26 @@ ggplot(data = train, aes(x = holiday, y = y)) +
  Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
-###Data Preprocessing!
-##변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.
+####Data Preprocessing!
+*변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.*
 
 
-#datetime : - 연월일 / 시간 -> 월별로 계절을 나누는게 어느정도 정확하지 않을까?
+#####datetime
+- 연월일 / 시간 -> 월별로 계절을 나누는게 어느정도 정확하지 않을까?  
+- 시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.  
 
-#           - 시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
+--> 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?  
 
-#시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
-#시간 분할해서 plot그려보기.
+시간 분할해서 plot그려보기.
+```{r}
 sp <- unlist(strsplit(train$datetime, ":"))
 time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
-plot(train$count~time)
-#일정한 추세를 보이는 것을 확인할 수 있었다.
+time <- as.integer(time)
+plot(train$y~time)
+```
+
+
+ --> 일정한 추세를 보이는 것을 확인할 수 있었다.
 
 #각 월별로 19일까지는 trainm, 20일부터는 test데이터이다. 연도는 살리자!
 #time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night
