@@ -270,7 +270,7 @@ Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holid
 
 #### Data Preprocessing!
 
-*변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.*
+**변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
 ##### datetime
 
@@ -279,7 +279,7 @@ Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holid
 
 --&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
 
-시간 분할해서 plot그려보기.
+**시간 분할해서 plot그려보기.**
 
 ``` r
 sp <- unlist(strsplit(train$datetime, ":"))
@@ -292,38 +292,84 @@ plot(train$y~time)
 
 --&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
-각 월별로 19일까지는 trainm, 20일부터는 test데이터이다. 연도는 살리자!
-======================================================================
+**날짜로 시간대 나누기**
 
-time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night
-========================================================================
+``` r
+data$daytime <- data$datetime
+data$time <- substr(data$datetime, 12, nchar(data$datetime))
+```
 
-test*c**a**s**u**a**l* &lt; −*N**A**t**e**s**t*registered &lt;- NA test$count &lt;- NA colnames(test) &lt;- colnames(train) data.all &lt;- rbind(train, test) str(data.all)
+**시간나누기**
 
-substr(data.all$datetime, 6, 7) \#일정 문자를 추출한다.(월) -&gt; season으로 대체할 수 있을 것 같다. substr(data.all$datetime, 9, 10) \#일정 문자를 추출한다.(날짜) substr(data.all*d**a**t**e**t**i**m**e*, 12, *n**c**h**a**r*(′*d**a**t**a*.*a**l**l*datetime')) \#일정 문자를 추출한다.(시간)
+``` r
+sp <- unlist(strsplit(data$datetime, ":"))
+time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
+data$daytime <- time
+```
 
-날짜로 시간대 나누기.
-=====================
+**time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.**
 
-data.all*t**i**m**e* &lt; −*s**u**b**s**t**r*(*d**a**t**a*.*a**l**l*datetime, 12, nchar('data.all*d**a**t**e**t**i**m**e*′))*d**a**t**a*.*a**l**l*daytime &lt;- data.all$time
+``` r
+dawnidx <- which(data$time == '0:00'
+               | data$time == '1:00'
+               | data$time == '2:00'
+               | data$time == '3:00'
+               | data$time == '4:00'
+               | data$time == '5:00')
+morningidx <- which(data$time == '6:00'
+                    | data$time == '7:00'
+                    | data$time == '8:00'
+                    | data$time == '9:00'
+                    | data$time == '10:00'
+                    | data$time == '11:00')
+afternoonidx <- which(data$time == '12:00'
+                      | data$time == '13:00'
+                      | data$time == '14:00'
+                      | data$time == '15:00'
+                      | data$time == '16:00'
+                      | data$time == '17:00')
+nightidx <- which(data$time == '18:00'
+                  | data$time == '19:00'
+                  | data$time == '20:00'
+                  | data$time == '21:00'
+                  | data$time == '22:00'
+                  | data$time == '23:00')
 
-시간나누기
-==========
+data$daytime[dawnidx] <- 'dawn'
+data$daytime[morningidx] <- 'morning'
+data$daytime[afternoonidx] <- 'afternoon'
+data$daytime[nightidx] <- 'night'
 
-sp &lt;- unlist(strsplit(data.all$datetime, ":")) time &lt;- substr(sp\[seq(from = 1, to = length(sp), by = 2)\], 12, 13) data.all$daytime &lt;- time
+data$time <- as.factor(data$time)
+data$daytime <- as.factor(data$daytime)
+str(data)
+```
 
-dawnidx &lt;- which(data.all*t**i**m**e* = =′0 : 00′|*d**a**t**a*.*a**l**l*time == '1:00' | data.all*t**i**m**e* = =′2 : 00′|*d**a**t**a*.*a**l**l*time == '3:00' | data.all*t**i**m**e* = =′4 : 00′|*d**a**t**a*.*a**l**l*time == '5:00') morningidx &lt;- which(data.all*t**i**m**e* = =′6 : 00′|*d**a**t**a*.*a**l**l*time == '7:00' | data.all*t**i**m**e* = =′8 : 00′|*d**a**t**a*.*a**l**l*time == '9:00' | data.all*t**i**m**e* = =′10 : 00′|*d**a**t**a*.*a**l**l*time == '11:00') afternoonidx &lt;- which(data.all*t**i**m**e* = =′12 : 00′|*d**a**t**a*.*a**l**l*time == '13:00' | data.all*t**i**m**e* = =′14 : 00′|*d**a**t**a*.*a**l**l*time == '15:00' | data.all*t**i**m**e* = =′16 : 00′|*d**a**t**a*.*a**l**l*time == '17:00') nightidx &lt;- which(data.all*t**i**m**e* = =′18 : 00′|*d**a**t**a*.*a**l**l*time == '19:00' | data.all*t**i**m**e* = =′20 : 00′|*d**a**t**a*.*a**l**l*time == '21:00' | data.all*t**i**m**e* = =′22 : 00′|*d**a**t**a*.*a**l**l*time == '23:00')
+    ## 'data.frame':    17379 obs. of  14 variables:
+    ##  $ datetime  : chr  "2011-01-01 0:00" "2011-01-01 1:00" "2011-01-01 2:00" "2011-01-01 3:00" ...
+    ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ holiday   : Factor w/ 2 levels "holiday","non holiday": 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ workingday: int  0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ weather   : int  1 1 1 1 1 2 1 1 1 1 ...
+    ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
+    ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
+    ##  $ humidity  : int  81 80 80 75 75 75 80 86 75 76 ...
+    ##  $ windspeed : num  0 0 0 0 0 ...
+    ##  $ casual    : int  3 8 5 3 0 0 2 1 1 8 ...
+    ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
+    ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
+    ##  $ daytime   : Factor w/ 4 levels "afternoon","dawn",..: 2 2 2 2 2 2 3 3 3 3 ...
+    ##  $ time      : Factor w/ 24 levels "0:00","1:00",..: 1 2 13 18 19 20 21 22 23 24 ...
 
-data.all*d**a**y**t**i**m**e*\[*d**a**w**n**i**d**x*\]&lt; − ′*d**a**w**n*′*d**a**t**a*.*a**l**l*daytime\[morningidx\] &lt;- 'morning' data.all*d**a**y**t**i**m**e*\[*a**f**t**e**r**n**o**o**n**i**d**x*\]&lt; − ′*a**f**t**e**r**n**o**o**n*′*d**a**t**a*.*a**l**l*daytime\[nightidx\] &lt;- 'night'
+**연도 추출**
 
-data.all*t**i**m**e* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*time) data.all*d**a**y**t**i**m**e* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*daytime) str(data.all)
+``` r
+data$datetime <- substr(data$datetime, 1, 4)
+data$datetime <- as.factor(data$datetime)
+```
 
-연도만 남기기.
-==============
-
-data.all*d**a**t**e**t**i**m**e* &lt; −*s**u**b**s**t**r*(*d**a**t**a*.*a**l**l*datetime, 1, 4) \#일정 문자를 추출한다.(연도) data.all*d**a**t**e**t**i**m**e* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*datetime)
-
-str(data.all) \# - 연도별 렌트의 증가추세? -&gt; 새로운 과제로 발견 가능.
+- 연도별 렌트의 증가추세? -&gt; 새로운 과제로 발견 가능.
+========================================================
 
 Season data 이름 부여하기.
 ==========================

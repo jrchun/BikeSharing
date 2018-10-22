@@ -202,7 +202,7 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
 ####Data Preprocessing!
-*변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.*
+**변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
 
 #####datetime
@@ -211,7 +211,7 @@ Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
 --> 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?  
 
-시간 분할해서 plot그려보기.
+**시간 분할해서 plot그려보기.**
 ```{r}
 sp <- unlist(strsplit(train$datetime, ":"))
 time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
@@ -222,67 +222,65 @@ plot(train$y~time)
 
  --> 일정한 추세를 보이는 것을 확인할 수 있었다.
 
-#각 월별로 19일까지는 trainm, 20일부터는 test데이터이다. 연도는 살리자!
-#time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night
-test$casual <- NA
-test$registered <- NA
-test$count <- NA
-colnames(test) <- colnames(train)
-data.all <- rbind(train, test)
-str(data.all)
+**날짜로 시간대 나누기**
+```{r}
+data$daytime <- data$datetime
+data$time <- substr(data$datetime, 12, nchar(data$datetime))
+```
 
-substr(data.all$datetime, 6, 7) #일정 문자를 추출한다.(월) -> season으로 대체할 수 있을 것 같다.
-substr(data.all$datetime, 9, 10) #일정 문자를 추출한다.(날짜)
-substr(data.all$datetime, 12, nchar('data.all$datetime')) #일정 문자를 추출한다.(시간)
-
-#날짜로 시간대 나누기.
-data.all$time <- substr(data.all$datetime, 12, nchar('data.all$datetime'))
-data.all$daytime <- data.all$time
-
-#시간나누기
-sp <- unlist(strsplit(data.all$datetime, ":"))
+**시간나누기**
+```{r}
+sp <- unlist(strsplit(data$datetime, ":"))
 time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
-data.all$daytime <- time
+data$daytime <- time
+```
 
-dawnidx <- which(data.all$time == '0:00'
-               | data.all$time == '1:00'
-               | data.all$time == '2:00'
-               | data.all$time == '3:00'
-               | data.all$time == '4:00'
-               | data.all$time == '5:00')
-morningidx <- which(data.all$time == '6:00'
-                    | data.all$time == '7:00'
-                    | data.all$time == '8:00'
-                    | data.all$time == '9:00'
-                    | data.all$time == '10:00'
-                    | data.all$time == '11:00')
-afternoonidx <- which(data.all$time == '12:00'
-                      | data.all$time == '13:00'
-                      | data.all$time == '14:00'
-                      | data.all$time == '15:00'
-                      | data.all$time == '16:00'
-                      | data.all$time == '17:00')
-nightidx <- which(data.all$time == '18:00'
-                  | data.all$time == '19:00'
-                  | data.all$time == '20:00'
-                  | data.all$time == '21:00'
-                  | data.all$time == '22:00'
-                  | data.all$time == '23:00')
 
-data.all$daytime[dawnidx] <- 'dawn'
-data.all$daytime[morningidx] <- 'morning'
-data.all$daytime[afternoonidx] <- 'afternoon'
-data.all$daytime[nightidx] <- 'night'
+**time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.**
+```{r}
+dawnidx <- which(data$time == '0:00'
+               | data$time == '1:00'
+               | data$time == '2:00'
+               | data$time == '3:00'
+               | data$time == '4:00'
+               | data$time == '5:00')
+morningidx <- which(data$time == '6:00'
+                    | data$time == '7:00'
+                    | data$time == '8:00'
+                    | data$time == '9:00'
+                    | data$time == '10:00'
+                    | data$time == '11:00')
+afternoonidx <- which(data$time == '12:00'
+                      | data$time == '13:00'
+                      | data$time == '14:00'
+                      | data$time == '15:00'
+                      | data$time == '16:00'
+                      | data$time == '17:00')
+nightidx <- which(data$time == '18:00'
+                  | data$time == '19:00'
+                  | data$time == '20:00'
+                  | data$time == '21:00'
+                  | data$time == '22:00'
+                  | data$time == '23:00')
 
-data.all$time <- as.factor(data.all$time)
-data.all$daytime <- as.factor(data.all$daytime)
-str(data.all)
+data$daytime[dawnidx] <- 'dawn'
+data$daytime[morningidx] <- 'morning'
+data$daytime[afternoonidx] <- 'afternoon'
+data$daytime[nightidx] <- 'night'
 
-#연도만 남기기.
-data.all$datetime <- substr(data.all$datetime, 1, 4) #일정 문자를 추출한다.(연도)
-data.all$datetime <- as.factor(data.all$datetime)
+data$time <- as.factor(data$time)
+data$daytime <- as.factor(data$daytime)
+str(data)
+```
 
-str(data.all)
+
+**연도 추출**
+```{r}
+data$datetime <- substr(data$datetime, 1, 4)
+data$datetime <- as.factor(data$datetime)
+```
+
+
 #           - 연도별 렌트의 증가추세? -> 새로운 과제로 발견 가능.
 
 
