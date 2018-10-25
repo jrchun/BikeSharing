@@ -248,7 +248,7 @@ table(data$holiday)
     ##     holiday non holiday 
     ##       16879         500
 
-Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
+Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -&gt; count에 영향을 주지 않는다.
 
 ``` r
 boxplot(data$y ~ data$holiday)
@@ -368,38 +368,47 @@ data$datetime <- substr(data$datetime, 1, 4)
 data$datetime <- as.factor(data$datetime)
 ```
 
-- 연도별 렌트의 증가추세? -&gt; 새로운 과제로 발견 가능.
-========================================================
+**Season data 이름 부여하기.**
 
-Season data 이름 부여하기.
-==========================
+``` r
+data$season[data$season == 1] <- 'Spring'
+```
 
-data.all*s**e**a**s**o**n*\[*d**a**t**a*.*a**l**l*season == 1\] &lt;- 'Spring' data.all*s**e**a**s**o**n*\[*d**a**t**a*.*a**l**l*season == 2\] &lt;- 'Summer' data.all*s**e**a**s**o**n*\[*d**a**t**a*.*a**l**l*season == 3\] &lt;- 'Autumn' data.all*s**e**a**s**o**n*\[*d**a**t**a*.*a**l**l*season == 4\] &lt;- 'Winter'
+    ## Warning in `[<-.factor`(`*tmp*`, data$season == 1, value =
+    ## structure(c(1L, : invalid factor level, NA generated
 
-data.all*s**e**a**s**o**n* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*season)
+``` r
+data$season[data$season == 2] <- 'Summer'
+```
 
-\#holiday -&gt; 20일(500개)의 데이터밖에 없는 휴일데이터 꼭 필요한가?
-=====================================================================
+    ## Warning in `[<-.factor`(`*tmp*`, data$season == 2, value =
+    ## structure(c(1L, : invalid factor level, NA generated
 
-\#지워버리자. workingday 데이터로만 써도 될것 같다.
-===================================================
+``` r
+data$season[data$season == 3] <- 'Autumn'
+```
 
-colnames(data.all)
-==================
+    ## Warning in `[<-.factor`(`*tmp*`, data$season == 3, value =
+    ## structure(c(1L, : invalid factor level, NA generated
 
-sum(data.all$holiday) \# sum(train$holiday)
-===========================================
+``` r
+data$season[data$season == 4] <- 'Winter'
+```
 
-sum(test$holiday) \# data.all1 &lt;- data.all\[, -3\] str(data.all) data.all$holiday &lt;- as.factor(data.all$holiday)
-======================================================================================================================
+    ## Warning in `[<-.factor`(`*tmp*`, data$season == 4, value =
+    ## structure(c(1L, : invalid factor level, NA generated
 
-Holiday와 Count는 상관관계가 있을 수도 있는데, 막 지우는건 아닌 것 같다.
-========================================================================
+``` r
+data$season <- as.factor(data$season)
+```
 
-\#\#범주형변수와 연속형범주의 상관관계는 어떻게 알아낼 수 있지?
+**Holiday** 위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. --&gt; 지워버리자. workingday 데이터로만 써도 될것 같다.
 
-workingday -&gt; factor로 변환
-==============================
+``` r
+data <- data[,-3]
+```
+
+**workingday** 범주형 변수로 변환 후에, 이름을 부여한다.
 
 data.all*w**o**r**k**i**n**g**d**a**y* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*workingday)
 

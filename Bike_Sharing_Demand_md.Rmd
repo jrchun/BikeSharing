@@ -185,7 +185,7 @@ str(data$holiday)
 table(data$holiday)
 ```
 
- Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
+ Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -> count에 영향을 주지 않는다.
 
 ```{r}
 boxplot(data$y ~ data$holiday)
@@ -281,31 +281,34 @@ data$datetime <- as.factor(data$datetime)
 ```
 
 
-#           - 연도별 렌트의 증가추세? -> 새로운 과제로 발견 가능.
+**Season data 이름 부여하기.**
+```{r}
+data$season[data$season == 1] <- 'Spring'
+data$season[data$season == 2] <- 'Summer'
+data$season[data$season == 3] <- 'Autumn'
+data$season[data$season == 4] <- 'Winter'
+
+data$season <- as.factor(data$season)
+
+```
 
 
-#Season data 이름 부여하기.
-data.all$season[data.all$season == 1] <- 'Spring'
-data.all$season[data.all$season == 2] <- 'Summer'
-data.all$season[data.all$season == 3] <- 'Autumn'
-data.all$season[data.all$season == 4] <- 'Winter'
+**Holiday**
+위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다.
+--> 지워버리자. workingday 데이터로만 써도 될것 같다.
 
-data.all$season <- as.factor(data.all$season)
+```{r}
+data <- data[,-3]
+```
 
-# #holiday -> 20일(500개)의 데이터밖에 없는 휴일데이터 꼭 필요한가?
-# #지워버리자. workingday 데이터로만 써도 될것 같다.
-# colnames(data.all)
-# sum(data.all$holiday)
-# sum(train$holiday)
-# sum(test$holiday)
-# data.all1 <- data.all[, -3]
-str(data.all)
-data.all$holiday <- as.factor(data.all$holiday)
+**workingday**
+범주형 변수로 변환 후에, 이름을 부여한다.
 
-#Holiday와 Count는 상관관계가 있을 수도 있는데, 막 지우는건 아닌 것 같다.
-  ##범주형변수와 연속형범주의 상관관계는 어떻게 알아낼 수 있지?
 
-#workingday -> factor로 변환
+
+
+
+
 data.all$workingday <- as.factor(data.all$workingday)
 
 #weather -> factor로 변환
