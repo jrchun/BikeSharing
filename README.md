@@ -5,7 +5,7 @@
 
 =============================
 
-본 문서는 Kaggle에 업로드된 '자전거 수요예측 분석'(Bike Sharing Demand)을 마크다운형식으로 편집하여,
+본 문서는 Kaggle에 업로드된 '자전거 수요예측 분석'(Bike Sharing Demand)을 마크다운형식으로 편집하여,  
 Github에 업로드 하기 위하여 작성된 문서입니다.
 
 자세한 사항은 저장소 내에 포함된 Bike_Sharing_Demand_md.md 문서를 통해 확인하시면 됩니다.
