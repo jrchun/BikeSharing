@@ -402,7 +402,8 @@ data$season[data$season == 4] <- 'Winter'
 data$season <- as.factor(data$season)
 ```
 
-**Holiday** 위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. --&gt; 지워버리자. workingday 데이터로만 써도 될것 같다.
+**Holiday**
+위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. --&gt; 지워버리자. workingday 데이터로만 써도 될것 같다.
 
 ``` r
 data <- data[,-3]
