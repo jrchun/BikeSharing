@@ -57,6 +57,12 @@ rm(list=ls())
 **Loading data**
 
 ``` r
+library(ggplot2)
+```
+
+    ## Warning: package 'ggplot2' was built under R version 3.4.4
+
+``` r
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -207,12 +213,6 @@ boxplot(data$y ~ data$season)
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 **ggplot을 활용한 plot**
-
-``` r
-library(ggplot2)
-```
-
-    ## Warning: package 'ggplot2' was built under R version 3.4.4
 
 ``` r
 ggplot(data = train) +
