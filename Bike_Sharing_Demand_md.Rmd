@@ -32,7 +32,6 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 ---  
 
 ## 1. 변수 정의  
-
  1. datetime - hourly date + timestamp  
 
  2. season  
@@ -69,8 +68,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
   
 ---  
 
-## 2. 분석 과정  
-
+## 2. 분석 과정   
 **Initialize**
 ```{r}
 rm(list=ls())
@@ -195,7 +193,7 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 ```
 
 
- Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
+Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
 ###Data Preprocessing!
@@ -276,19 +274,6 @@ str(data)
 data$datetime <- substr(data$datetime, 1, 4)
 data$datetime <- as.factor(data$datetime)
 ```
-
-
-**Season data 이름 부여하기.**
-```{r}
-data$season[data$season == 1] <- 'Spring'
-data$season[data$season == 2] <- 'Summer'
-data$season[data$season == 3] <- 'Autumn'
-data$season[data$season == 4] <- 'Winter'
-
-data$season <- as.factor(data$season)
-
-```
-
 
 **Holiday**  
 위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다.

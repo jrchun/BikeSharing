@@ -374,40 +374,6 @@ data$datetime <- substr(data$datetime, 1, 4)
 data$datetime <- as.factor(data$datetime)
 ```
 
-**Season data 이름 부여하기.**
-
-``` r
-data$season[data$season == 1] <- 'Spring'
-```
-
-    ## Warning in `[<-.factor`(`*tmp*`, data$season == 1, value =
-    ## structure(c(1L, : invalid factor level, NA generated
-
-``` r
-data$season[data$season == 2] <- 'Summer'
-```
-
-    ## Warning in `[<-.factor`(`*tmp*`, data$season == 2, value =
-    ## structure(c(1L, : invalid factor level, NA generated
-
-``` r
-data$season[data$season == 3] <- 'Autumn'
-```
-
-    ## Warning in `[<-.factor`(`*tmp*`, data$season == 3, value =
-    ## structure(c(1L, : invalid factor level, NA generated
-
-``` r
-data$season[data$season == 4] <- 'Winter'
-```
-
-    ## Warning in `[<-.factor`(`*tmp*`, data$season == 4, value =
-    ## structure(c(1L, : invalid factor level, NA generated
-
-``` r
-data$season <- as.factor(data$season)
-```
-
 **Holiday**
 위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. --&gt; 지워버리자. workingday 데이터로만 써도 될것 같다.
 
