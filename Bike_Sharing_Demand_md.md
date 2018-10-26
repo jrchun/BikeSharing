@@ -11,28 +11,30 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 1.  datetime - hourly date + timestamp
 
 2.  season
-    1 : spring
-    2 : summer
-    3 : fall
-    4 : winter
 
-3.  holiday - whether the day is considered a holiday (휴일)
+-   1 : spring
+-   2 : summer
+-   3 : fall
+-   4 : winter
 
-4.  workingday - whether the day is neither a weekend nor holiday (주말도, 휴일도 아닌 날)
+1.  holiday - whether the day is considered a holiday (휴일)
 
-5.  weather
-    1: Clear, Few clouds, Partly cloudy, Partly cloudy
-    2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
-    3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
-    4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+2.  workingday - whether the day is neither a weekend nor holiday (주말도, 휴일도 아닌 날)
 
-6.  temp - temperature in Celsius(섭씨) -&gt; 실제온도.
+3.  weather
 
-    atemp - "feels like" temperature in Celsius (체감온도)
+-   1: Clear, Few clouds, Partly cloudy, Partly cloudy
+-   2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+-   3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+-   4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
 
-7.  humidity - relative humidity (습기)
+1.  temp - temperature in Celsius(섭씨) -&gt; 실제온도.
 
-8.  windspeed - wind speed (풍속)
+2.  atemp - "feels like" temperature in Celsius (체감온도)
+
+3.  humidity - relative humidity (습기)
+
+4.  windspeed - wind speed (풍속)
 
 **Train에만 있는 것. (종속변수)**
 \* casual - number of non-registered user rentals initiated (비회원의 렌탈수)
