@@ -53,7 +53,8 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 4.  windspeed - wind speed (풍속)
 
 **Train에만 있는 것. (종속변수)**
-\* casual - number of non-registered user rentals initiated (비회원의 렌탈수)
+
+-   casual - number of non-registered user rentals initiated (비회원의 렌탈수)
 
 -   registered - number of registered user rentals initiated (회원의 렌탈수)
 
@@ -79,7 +80,7 @@ train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
 ```
 
-**2.1 데이터 구조확인**
+### 2.1 데이터 구조확인
 
 ``` r
 colSums(is.na(train))
@@ -126,36 +127,35 @@ str(c(train, test))
     ##  $ humidity  : int [1:6493] 56 56 56 56 56 60 60 55 55 52 ...
     ##  $ windspeed : num [1:6493] 26 0 0 11 11 ...
 
-NA값은 존재하지 않는다는 것을 확인할 수 있다.
+-&gt; NA값은 존재하지 않는다는 것을 확인할 수 있다.
 
-**2.2 가설 사전 수립(Make insights)**
+### 2.2 가설 사전 수립(Make insights)
 
-### Idea 1. train과 test 데이터의 차이점
+**Idea 1. train과 test 데이터의 차이점**
 
-train data에 비하여 test데이터는 **casual(비회원의 렌트 수)**와 **registered(회원의 렌트 수)**가 존재하지 않는다.
+train data에 비하여 test데이터는 casual(비회원의 렌트 수)와 registered(회원의 렌트 수)가 존재하지 않는다.
 결국 count는 전체의 렌트 수 이므로, 두개의 모델을 적합시켜서 각각에서의 비회원 / 회원의 렌트수를 예측 한 이후에 그걸 더하면 좀 더 정확하지 않을까?
 아무래도 casual과 registered는 확실히 경향에 있어서 차이가 있을 것 같다.
 casual일때 더 많이 빌릴까? registered일때 더 많이 빌릴까?
 이 사람들의 특징에서는 어떠한 차이가 존재할까?
 
-### Idea 2. 기본 가정 확인하기.
+**Idea 2. 기본 가정 확인하기.**
 
 우리가 원하는 종속변수는 특정한 사건(렌트)의 수를 뜻하는 정수이다.
 그렇다면 glm을 통해서 poison분포로 적합시킬 수 있지는 않을까?
 
-### Idea 3. 변수간의 관계에 대해서 생각해보기.
+**Idea 3. 변수간의 관계에 대해서 생각해보기.**
 
 날짜에 관련된 변수가 datetime, holiday, workingday 이렇게 3개나 존재한다. (어쩌면 weather 또한 관련 되어 있을지도)
 Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 변수간의 Correration 확인해볼수 있을것 같다.
 
-**2.3Exproratory Data Analysis (EDA)**
+### 2.3 Exproratory Data Analysis (EDA)
 
-### Preparing Total data
+**Preparing Total data**
 
 ``` r
 test[,c('casual', 'registered', 'count')] <- NA
-
 colnames(train)[12] <- 'y'
 colnames(test)[12] <- 'y'
 data <- rbind(train, test)
@@ -176,9 +176,7 @@ str(data)
     ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
     ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
 
-### 변수별 분석
-
-#### datetime
+**datetime**
 
 ``` r
 nrow(data)
@@ -192,9 +190,10 @@ length(table(data$datetime))
 
     ## [1] 17379
 
-모두 다른값을 보임을 알 수 있음.
+-&gt; 모두 다른값을 보임을 알 수 있음.
 
-#### season
+**season**
+팩터들의 이름을 부여한다.
 
 ``` r
 str(data$season)
@@ -207,7 +206,6 @@ data$season[which(data$season == 1)] <- 'spring'
 data$season[which(data$season == 2)] <- 'summer'
 data$season[which(data$season == 3)] <- 'fall'
 data$season[which(data$season == 4)] <- 'winter'
-
 data$season <- as.factor(data$season)
 levels(data$season)
 ```
@@ -218,7 +216,9 @@ levels(data$season)
 data$season <- factor(data$season, levels(data$season)[c(2, 3, 1, 4)])
 ```
 
-**기본 Box Plot으로 그리기**
+계절에 따른 y값의 모양을 상자그림을 통하여 실시하려고 한다.
+단 2가지 방법으로 표현해보도록 하자.
+**A. Box Plot으로 그리기**
 
 ``` r
 boxplot(data$y ~ data$season)
@@ -226,7 +226,7 @@ boxplot(data$y ~ data$season)
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
-**ggplot을 활용한 plot**
+**B. ggplot을 활용한 그림**
 
 ``` r
 ggplot(data = train) +
@@ -239,9 +239,9 @@ ggplot(data = train) +
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
-계절에 따라 y(count)의 값이 크게 변동은 없으나, summer와 fall의 평균이 어느정도 높은것을 확인할 수 있다.
+-&gt; 계절에 따라 y(count)의 값이 크게 변동은 없으나, summer와 fall의 평균이 어느정도 높은것을 확인할 수 있다.
 
-#### holiday
+**holiday**
 
 ``` r
 data$holiday[which(data$holiday == 0)] <- 'holiday'
@@ -260,7 +260,7 @@ table(data$holiday)
     ##     holiday non holiday 
     ##       16879         500
 
-Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -&gt; count에 영향을 주지 않는다.
+-&gt; Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -&gt; count에 영향을 주지 않는다.
 
 ``` r
 ggplot(data = train, aes(x = holiday, y = y)) +
@@ -283,7 +283,7 @@ Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holid
 -   연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
 -   시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
 
---&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
+-&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
 
 **시간 분할해서 plot그려보기.**
 
@@ -296,7 +296,7 @@ plot(train$y~time)
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
---&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
+-&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
 **날짜로 시간대 나누기**
 
