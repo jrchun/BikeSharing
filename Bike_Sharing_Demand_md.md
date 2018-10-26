@@ -415,7 +415,9 @@ data$season <- as.factor(data$season)
 data <- data[,-3]
 ```
 
-**workingday** 범주형 변수로 변환 후에, 이름을 부여한다.
+**workingday**
+
+범주형 변수로 변환 후에, 이름을 부여한다.
 
 data.all*w**o**r**k**i**n**g**d**a**y* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*workingday)
 
