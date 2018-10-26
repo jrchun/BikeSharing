@@ -5,6 +5,22 @@
 Github에 업로드 하기 위하여 작성된 문서입니다.
 데이터 출처 \*<https://www.kaggle.com/c/bike-sharing-demand>
 
+------------------------------------------------------------------------
+
+분석 과정 목차
+--------------
+
+1.  변수 정의
+2.  분석 과정
+    1.  변수 구조 확인.
+    2.  사전 가설 수립.
+    3.  EDA / Data preprocessing
+    4.  Modeling
+    5.  MSE Checking
+3.  결론
+
+------------------------------------------------------------------------
+
 변수 정의
 ---------
 
@@ -249,12 +265,6 @@ table(data$holiday)
 Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -&gt; count에 영향을 주지 않는다.
 
 ``` r
-boxplot(data$y ~ data$holiday)
-```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
-
-``` r
 ggplot(data = train, aes(x = holiday, y = y)) +
   geom_boxplot(aes(group = holiday)) +
   aes(fill = holiday) +
@@ -262,7 +272,7 @@ ggplot(data = train, aes(x = holiday, y = y)) +
        subtitle = 'Grouped by holiday')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 

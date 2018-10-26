@@ -17,7 +17,8 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
  데이터 출처
  *<https://www.kaggle.com/c/bike-sharing-demand>  
 
----
+---   
+
 ##분석 과정 목차  
  1. 변수 정의  
  2. 분석 과정  
@@ -28,7 +29,8 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
     5) MSE Checking  
  3. 결론
  
----
+---  
+
 ##변수 정의  
 
  1. datetime - hourly date + timestamp  
@@ -195,8 +197,6 @@ table(data$holiday)
  Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -> count에 영향을 주지 않는다.
 
 ```{r}
-boxplot(data$y ~ data$holiday)
-
 ggplot(data = train, aes(x = holiday, y = y)) +
   geom_boxplot(aes(group = holiday)) +
   aes(fill = holiday) +
