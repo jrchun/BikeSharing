@@ -5,14 +5,8 @@
 Github에 업로드 하기 위하여 작성된 문서입니다.
 데이터 출처 \*<https://www.kaggle.com/c/bike-sharing-demand>
 
-------------------------------------------------------------------------
-
-데이터 정의
------------
-
-------------------------------------------------------------------------
-
-### 변수 정의
+변수 정의
+---------
 
 1.  datetime - hourly date + timestamp
 
@@ -40,23 +34,25 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 
 8.  windspeed - wind speed (풍속)
 
-#### Train에만 있는 것. (종속변수)
-
--   casual - number of non-registered user rentals initiated (비회원의 렌탈수)
+**Train에만 있는 것. (종속변수)**
+\* casual - number of non-registered user rentals initiated (비회원의 렌탈수)
 
 -   registered - number of registered user rentals initiated (회원의 렌탈수)
 
 -   count - number of total rentals (토탈렌트)
 
-### 분석 과정
+------------------------------------------------------------------------
 
-#### Initialize
+분석 과정
+---------
+
+**Initialize**
 
 ``` r
 rm(list=ls())
 ```
 
-#### Loading data
+**Loading data**
 
 ``` r
 setwd('C:\\github\\Project\\BikeSharing')
@@ -108,9 +104,9 @@ str(c(train, test))
 
 NA값은 존재하지 않는다는 것을 확인할 수 있다.
 
-#### Make insight!
+\*\* Make insight!\*\*
 
-##### Idea 1.
+#### Idea 1.
 
 train data에 비하여 test데이터는 casual(비회원의 렌트 수)와 registered(회원의 렌트 수)가 존재하지 않는다.
 결국 count는 전체의 렌트 수 이므로, 두개의 모델을 적합시켜서 각각에서의 비회원 / 회원의 렌트수를 예측 한 이후에 그걸 더하면 좀 더 정확하지 않을까?
@@ -118,22 +114,22 @@ train data에 비하여 test데이터는 casual(비회원의 렌트 수)와 regi
 casual일때 더 많이 빌릴까? registered일때 더 많이 빌릴까?
 이 사람들의 특징에서는 어떠한 차이가 존재할까?
 
-##### Idea 2.
+#### Idea 2.
 
 가정을 확인해보기.
 우리가 원하는 종속변수는 특정한 사건(렌트)의 수를 뜻하는 정수이다.
 그렇다면 glm을 통해서 poison분포로 적합시킬 수 있지는 않을까?
 
-##### Idea 3.
+#### Idea 3.
 
 변수간의 관계에 대해서 생각해보기.
 날짜에 관련된 변수가 datetime, holiday, workingday 이렇게 3개나 존재한다. (어쩌면 weather 또한 관련 되어 있을지도)
 Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 변수간의 Correration 확인해볼수 있을것 같다.
 
-#### Exproratory Data Analysis (EDA)
+### Exproratory Data Analysis (EDA)
 
-##### Preparing Total data
+#### Preparing Total data
 
 ``` r
 test[,c('casual', 'registered', 'count')] <- NA
@@ -158,9 +154,9 @@ str(data)
     ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
     ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
 
-#### 변수별 분석
+### 변수별 분석
 
-##### datetime
+#### datetime
 
 ``` r
 nrow(data)
@@ -176,7 +172,7 @@ length(table(data$datetime))
 
 모두 다른값을 보임을 알 수 있음.
 
-##### season
+#### season
 
 ``` r
 str(data$season)
@@ -229,7 +225,7 @@ ggplot(data = train) +
 
 계절에 따라 y(count)의 값이 크게 변동은 없으나, summer와 fall의 평균이 어느정도 높은것을 확인할 수 있다.
 
-##### holiday
+#### holiday
 
 ``` r
 data$holiday[which(data$holiday == 0)] <- 'holiday'
@@ -268,11 +264,11 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 
 Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
-#### Data Preprocessing!
+### Data Preprocessing!
 
 **변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
-##### datetime
+#### datetime
 
 -   연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
 -   시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
