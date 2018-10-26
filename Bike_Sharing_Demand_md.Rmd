@@ -19,7 +19,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 
 ---   
 
-##분석 과정 목차  
+## 분석 과정 목차  
  1. 변수 정의  
  2. 분석 과정  
     1) 데이터 구조 확인  
@@ -31,7 +31,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
  
 ---  
 
-##1. 변수 정의  
+## 1. 변수 정의  
 
  1. datetime - hourly date + timestamp  
 
@@ -69,7 +69,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
   
 ---  
 
-##2. 분석 과정  
+## 2. 분석 과정  
 
 **Initialize**
 ```{r}
@@ -82,7 +82,7 @@ test <- read.csv('test.csv', stringsAsFactors = F)
 
 
 
-###2.1 데이터 구조확인  
+### 2.1 데이터 구조확인  
 
 ```{r}  
 colSums(is.na(train))
@@ -92,7 +92,7 @@ str(c(train, test))
 
 -> NA값은 존재하지 않는다는 것을 확인할 수 있다.  
 
-###2.2 가설 사전 수립(Make insights)  
+### 2.2 가설 사전 수립(Make insights)  
 
 **Idea 1. train과 test 데이터의 차이점**  
 
@@ -120,7 +120,7 @@ Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 변수간의 Correration 확인해볼수 있을것 같다.  
   
   
-###2.3 Exproratory Data Analysis (EDA)  
+### 2.3 Exproratory Data Analysis (EDA)  
 
 **Preparing Total data**  
 
