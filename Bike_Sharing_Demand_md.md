@@ -16,6 +16,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 2) 사전 가설 수립(Make insight)
 3) EDA / Data preprocessing 4) Modeling
 5) MSE Checking
+
 결론
 
 ------------------------------------------------------------------------
@@ -217,6 +218,7 @@ data$season <- factor(data$season, levels(data$season)[c(2, 3, 1, 4)])
 
 계절에 따른 y값의 모양을 상자그림을 통하여 실시하려고 한다.
 단 2가지 방법으로 표현해보도록 하자.
+
 **A. Box Plot으로 그리기**
 
 ``` r
@@ -259,7 +261,8 @@ table(data$holiday)
     ##     holiday non holiday 
     ##       16879         500
 
--&gt; Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -&gt; count에 영향을 주지 않는다.
+-&gt; Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
+-&gt; count에 영향을 주지 않는다.
 
 ``` r
 ggplot(data = train, aes(x = holiday, y = y)) +
@@ -271,16 +274,14 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
-Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
+-&gt; Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
-### Data Preprocessing!
+### Data Preprocessing
 
 **변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
-#### datetime
-
--   연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
--   시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
+**datetime** - 연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
+- 시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
 
 -&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
 
@@ -374,7 +375,8 @@ data$datetime <- as.factor(data$datetime)
 ```
 
 **Holiday**
-위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. --&gt; 지워버리자. workingday 데이터로만 써도 될것 같다.
+
+위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. -&gt; 지워버리자. workingday 데이터만 사용
 
 ``` r
 data <- data[,-3]
@@ -384,14 +386,32 @@ data <- data[,-3]
 
 범주형 변수로 변환 후에, 이름을 부여한다.
 
-data.all*w**o**r**k**i**n**g**d**a**y* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*workingday)
+``` r
+data$workingday <- as.factor(data$workingday)
+```
 
-weather -&gt; factor로 변환
-===========================
+**weather**
+범주형 변수로 변환
 
-data.all*w**e**a**t**h**e**r* &lt; −*a**s*.*f**a**c**t**o**r*(*d**a**t**a*.*a**l**l*weather)
+``` r
+data$weather <- as.factor(data$weather)
+str(data)
+```
 
-str(data.all)
+    ## 'data.frame':    17379 obs. of  13 variables:
+    ##  $ datetime  : Factor w/ 2 levels "2011","2012": 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ workingday: Factor w/ 2 levels "0","1": 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ weather   : Factor w/ 4 levels "1","2","3","4": 1 1 1 1 1 2 1 1 1 1 ...
+    ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
+    ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
+    ##  $ humidity  : int  81 80 80 75 75 75 80 86 75 76 ...
+    ##  $ windspeed : num  0 0 0 0 0 ...
+    ##  $ casual    : int  3 8 5 3 0 0 2 1 1 8 ...
+    ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
+    ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
+    ##  $ daytime   : Factor w/ 4 levels "afternoon","dawn",..: 2 2 2 2 2 2 3 3 3 3 ...
+    ##  $ time      : Factor w/ 24 levels "0:00","1:00",..: 1 2 13 18 19 20 21 22 23 24 ...
 
 더 관찰할 만한 변수 없어? 확인해보자.
 -------------------------------------

@@ -27,6 +27,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
     3) EDA / Data preprocessing
     4) Modeling  
     5) MSE Checking  
+    
  결론
  
 ---  
@@ -154,6 +155,7 @@ data$season <- factor(data$season, levels(data$season)[c(2, 3, 1, 4)])
 ```
 계절에 따른 y값의 모양을 상자그림을 통하여 실시하려고 한다.  
 단 2가지 방법으로 표현해보도록 하자.  
+
 **A. Box Plot으로 그리기**
 
 ```{r}
@@ -183,7 +185,8 @@ str(data$holiday)
 table(data$holiday)
 ```
 
--> Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다. -> count에 영향을 주지 않는다.
+-> Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.  
+-> count에 영향을 주지 않는다.
 
 ```{r}
 ggplot(data = train, aes(x = holiday, y = y)) +
@@ -194,14 +197,14 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 ```
 
 
-Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
+-> Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
-###Data Preprocessing!
+### Data Preprocessing
 **변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
 
-####datetime
+**datetime**
 - 연월일 / 시간 -> 월별로 계절을 나누는게 어느정도 정확하지 않을까?  
 - 시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.  
 
@@ -276,9 +279,10 @@ data$datetime <- substr(data$datetime, 1, 4)
 data$datetime <- as.factor(data$datetime)
 ```
 
-**Holiday**  
+**Holiday**   
+
 위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다.
---> 지워버리자. workingday 데이터로만 써도 될것 같다.
+-> 지워버리자. workingday 데이터만 사용
 
 ```{r}
 data <- data[,-3]
@@ -288,17 +292,21 @@ data <- data[,-3]
 
 범주형 변수로 변환 후에, 이름을 부여한다.
 
+```{r}
+data$workingday <- as.factor(data$workingday)
+```
 
 
 
+**weather**  
+ 범주형 변수로 변환
+
+```{r}
+data$weather <- as.factor(data$weather)
+str(data)
+```
 
 
-data.all$workingday <- as.factor(data.all$workingday)
-
-#weather -> factor로 변환
-data.all$weather <- as.factor(data.all$weather)
-
-str(data.all)
 
 ##더 관찰할 만한 변수 없어? 확인해보자.
 #correration of numeric data.
