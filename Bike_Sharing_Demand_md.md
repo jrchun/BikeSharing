@@ -72,11 +72,6 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 ``` r
 rm(list=ls())
 library(ggplot2)
-```
-
-    ## Warning: package 'ggplot2' was built under R version 3.4.4
-
-``` r
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -153,8 +148,6 @@ Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 변수간의 Correration 확인해볼수 있을것 같다.
 
 ### Data Preprocessing
-
-**변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
 **datetime**
 
