@@ -308,11 +308,13 @@ ggplot(data = train, aes(x = workingday, y = y)) +
        subtitle = 'Grouped by working')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-12-1.png) -&gt; 평균의 차이가 크지 않은 것을 확인할 수 있다.
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+-&gt; 평균의 차이가 크지 않은 것을 확인할 수 있다.
 
 **weather**
 
-범주별 데이터 수 확인하기.
+범주별 데이터 수 확인
 
 ``` r
 table(data$weather)
@@ -324,7 +326,7 @@ table(data$weather)
 
 -&gt; 4(Heavy Rain)인 자료가 단 3개밖에 존재하지 않는다.
 
-차이점 확인하기.
+차이점 확인
 
 ``` r
 ggplot(data = data, aes(x = weather, y = y))+
@@ -339,6 +341,25 @@ ggplot(data = data, aes(x = weather, y = y))+
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-14-1.png)
 
 -&gt; 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.
+
+**Numerical data Exploring**
+
+temp, atemp, humidity, windspeed 모두 수치형 데이터이며, 이중 주목할 것은 temp(온도)와 atemp(체감온도) 일 것이다. 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.
+
+``` r
+num_data <- data[, c('temp', 'atemp', 'humidity', 'windspeed')]
+cor(num_data)
+```
+
+    ##                  temp       atemp    humidity   windspeed
+    ## temp       1.00000000  0.98767214 -0.06988139 -0.02312526
+    ## atemp      0.98767214  1.00000000 -0.05191770 -0.06233604
+    ## humidity  -0.06988139 -0.05191770  1.00000000 -0.29010490
+    ## windspeed -0.02312526 -0.06233604 -0.29010490  1.00000000
+
+-&gt; 예상대로 temp와 atemp의 상관관계를 확인할 수 있었다.
+
+**각 연속형 변수의 히스토그램과, 종속변수와의 상관관계 확인**
 
 ------------------------------------------------------------------------
 
@@ -360,7 +381,7 @@ time <- as.integer(time)
 plot(train$y~time)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-17-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
