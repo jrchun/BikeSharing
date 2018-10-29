@@ -146,13 +146,14 @@ length(table(data$datetime))
 -> 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다. 
 
 ```{r}
-with(data, plot(y~as.factor(datetime)))
+# with(data, plot(y~as.factor(datetime)))
 ```
 
 -> 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.  
 따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
 
 **season**  
+
 팩터들의 이름을 부여한다.
 ```{r}
 str(data$season)
@@ -209,9 +210,50 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 
 
 -> Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
-Holiday에 상대적으로 많은 것을 확인할 수 있다.
+Holiday에 상대적으로 많은 것을 확인할 수 있다.  
 
+**workingday**  
+
+```{r}
+data$workingday[which(data$workingday == 0)] <- 'non workingday'
+data$workingday[which(data$workingday == 1)] <- 'workingday'
+data$workingday <- as.factor(data$workingday)
+table(data$workingday)
+```
+-> 1 : 2의 비율로 분포하는 것을 확인할 수 있다.  
+
+차이점 확인하기.
   
+```{r}
+ggplot(data = train, aes(x = workingday, y = y)) +
+  geom_boxplot(aes(group = workingday)) +
+  aes(fill = workingday) +
+  labs(title = 'Boxplot of Data' ,
+       subtitle = 'Grouped by working')
+```  
+-> 평균의 차이가 크지 않은 것을 확인할 수 있다.  
+
+**weather**  
+
+범주별 데이터 수 확인하기.  
+```{r}
+table(data$weather)
+```
+-> 4(Heavy Rain)인 자료가 단 3개밖에 존재하지 않는다.  
+
+차이점 확인하기.
+
+```{r}
+ggplot(data = data, aes(x = weather, y = y))+
+     geom_boxplot(aes(group = weather)) +
+     aes(fill = weather) +
+     labs(title = 'Boxplot of Data' ,
+     subtitle = 'Grouped by weather')
+```
+
+-> 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.
+
+
 ---
 
 ### Data Preprocessing

@@ -192,15 +192,14 @@ length(table(data$datetime))
 -&gt; 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.
 
 ``` r
-with(data, plot(y~as.factor(datetime)))
+# with(data, plot(y~as.factor(datetime)))
 ```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 -&gt; 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.
 따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
 
 **season**
+
 팩터들의 이름을 부여한다.
 
 ``` r
@@ -284,6 +283,63 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 
 -&gt; Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
+**workingday**
+
+``` r
+data$workingday[which(data$workingday == 0)] <- 'non workingday'
+data$workingday[which(data$workingday == 1)] <- 'workingday'
+data$workingday <- as.factor(data$workingday)
+table(data$workingday)
+```
+
+    ## 
+    ## non workingday     workingday 
+    ##           5514          11865
+
+-&gt; 1 : 2의 비율로 분포하는 것을 확인할 수 있다.
+
+차이점 확인하기.
+
+``` r
+ggplot(data = train, aes(x = workingday, y = y)) +
+  geom_boxplot(aes(group = workingday)) +
+  aes(fill = workingday) +
+  labs(title = 'Boxplot of Data' ,
+       subtitle = 'Grouped by working')
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-12-1.png) -&gt; 평균의 차이가 크지 않은 것을 확인할 수 있다.
+
+**weather**
+
+범주별 데이터 수 확인하기.
+
+``` r
+table(data$weather)
+```
+
+    ## 
+    ##     1     2     3     4 
+    ## 11413  4544  1419     3
+
+-&gt; 4(Heavy Rain)인 자료가 단 3개밖에 존재하지 않는다.
+
+차이점 확인하기.
+
+``` r
+ggplot(data = data, aes(x = weather, y = y))+
+     geom_boxplot(aes(group = weather)) +
+     aes(fill = weather) +
+     labs(title = 'Boxplot of Data' ,
+     subtitle = 'Grouped by weather')
+```
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+-&gt; 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.
+
 ------------------------------------------------------------------------
 
 ### Data Preprocessing
@@ -304,7 +360,7 @@ time <- as.integer(time)
 plot(train$y~time)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
@@ -365,7 +421,7 @@ str(data)
     ##  $ datetime  : chr  "2011-01-01 0:00" "2011-01-01 1:00" "2011-01-01 2:00" "2011-01-01 3:00" ...
     ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
     ##  $ holiday   : Factor w/ 2 levels "holiday","non holiday": 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ workingday: int  0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ workingday: Factor w/ 2 levels "non workingday",..: 1 1 1 1 1 1 1 1 1 1 ...
     ##  $ weather   : int  1 1 1 1 1 2 1 1 1 1 ...
     ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
     ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
@@ -411,7 +467,7 @@ str(data)
     ## 'data.frame':    17379 obs. of  13 variables:
     ##  $ datetime  : Factor w/ 2 levels "2011","2012": 1 1 1 1 1 1 1 1 1 1 ...
     ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ workingday: Factor w/ 2 levels "0","1": 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ workingday: Factor w/ 2 levels "non workingday",..: 1 1 1 1 1 1 1 1 1 1 ...
     ##  $ weather   : Factor w/ 4 levels "1","2","3","4": 1 1 1 1 1 2 1 1 1 1 ...
     ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
     ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
