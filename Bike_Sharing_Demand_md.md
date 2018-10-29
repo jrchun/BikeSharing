@@ -165,7 +165,7 @@ time <- as.integer(time)
 plot(train$y~time)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
