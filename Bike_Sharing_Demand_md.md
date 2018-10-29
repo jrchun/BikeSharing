@@ -65,6 +65,8 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 분석 과정
 ---------
 
+### 2.1 데이터 구조확인
+
 **Initialize**
 
 ``` r
@@ -79,8 +81,6 @@ setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
 ```
-
-### 2.1 데이터 구조확인
 
 ``` r
 colSums(is.na(train))
@@ -127,6 +127,8 @@ str(c(train, test))
     ##  $ humidity  : int [1:6493] 56 56 56 56 56 60 60 55 55 52 ...
     ##  $ windspeed : num [1:6493] 26 0 0 11 11 ...
 
+------------------------------------------------------------------------
+
 -&gt; NA값은 존재하지 않는다는 것을 확인할 수 있다.
 
 ### 2.2 가설 사전 수립(Make insights)
@@ -150,138 +152,14 @@ casual일때 더 많이 빌릴까? registered일때 더 많이 빌릴까?
 Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 변수간의 Correration 확인해볼수 있을것 같다.
 
-### 2.3 Exproratory Data Analysis (EDA)
-
-**Preparing Total data**
-
-``` r
-test[,c('casual', 'registered', 'count')] <- NA
-colnames(train)[12] <- 'y'
-colnames(test)[12] <- 'y'
-data <- rbind(train, test)
-str(data)
-```
-
-    ## 'data.frame':    17379 obs. of  12 variables:
-    ##  $ datetime  : chr  "2011-01-01 0:00" "2011-01-01 1:00" "2011-01-01 2:00" "2011-01-01 3:00" ...
-    ##  $ season    : int  1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ holiday   : int  0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ workingday: int  0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ weather   : int  1 1 1 1 1 2 1 1 1 1 ...
-    ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
-    ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
-    ##  $ humidity  : int  81 80 80 75 75 75 80 86 75 76 ...
-    ##  $ windspeed : num  0 0 0 0 0 ...
-    ##  $ casual    : int  3 8 5 3 0 0 2 1 1 8 ...
-    ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
-    ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
-
-**datetime**
-
-``` r
-nrow(data)
-```
-
-    ## [1] 17379
-
-``` r
-length(table(data$datetime))
-```
-
-    ## [1] 17379
-
--&gt; 모두 다른값을 보임을 알 수 있음.
-
-**season**
-팩터들의 이름을 부여한다.
-
-``` r
-str(data$season)
-```
-
-    ##  int [1:17379] 1 1 1 1 1 1 1 1 1 1 ...
-
-``` r
-data$season[which(data$season == 1)] <- 'spring'
-data$season[which(data$season == 2)] <- 'summer'
-data$season[which(data$season == 3)] <- 'fall'
-data$season[which(data$season == 4)] <- 'winter'
-data$season <- as.factor(data$season)
-levels(data$season)
-```
-
-    ## [1] "fall"   "spring" "summer" "winter"
-
-``` r
-data$season <- factor(data$season, levels(data$season)[c(2, 3, 1, 4)])
-```
-
-계절에 따른 y값의 모양을 상자그림을 통하여 실시하려고 한다.
-단 2가지 방법으로 표현해보도록 하자.
-
-**A. Box Plot으로 그리기**
-
-``` r
-boxplot(data$y ~ data$season)
-```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-6-1.png)
-
-**B. ggplot을 활용한 그림**
-
-``` r
-ggplot(data = train) +
-  geom_boxplot(aes(x = factor(season), y = y) ,fill = c('coral', 'coral1', 'coral2', 'coral3')) +
-  labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by Season' ,
-       x = 'Season') +
-  scale_x_discrete(labels = levels(data$season))
-```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-7-1.png)
-
--&gt; 계절에 따라 y(count)의 값이 크게 변동은 없으나, summer와 fall의 평균이 어느정도 높은것을 확인할 수 있다.
-
-**holiday**
-
-``` r
-data$holiday[which(data$holiday == 0)] <- 'holiday'
-data$holiday[which(data$holiday == 1)] <- 'non holiday'
-data$holiday <- as.factor(data$holiday)
-str(data$holiday)
-```
-
-    ##  Factor w/ 2 levels "holiday","non holiday": 1 1 1 1 1 1 1 1 1 1 ...
-
-``` r
-table(data$holiday)
-```
-
-    ## 
-    ##     holiday non holiday 
-    ##       16879         500
-
--&gt; Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
--&gt; count에 영향을 주지 않는다.
-
-``` r
-ggplot(data = train, aes(x = holiday, y = y)) +
-  geom_boxplot(aes(group = holiday)) +
-  aes(fill = holiday) +
-  labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by holiday')
-```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
-
--&gt; Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
-
 ### Data Preprocessing
 
 **변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
-**datetime** - 연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
-- 시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
+**datetime**
+
+-   연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
+-   시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
 
 -&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
 
@@ -294,7 +172,7 @@ time <- as.integer(time)
 plot(train$y~time)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 

@@ -71,7 +71,11 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 ---  
 
 ## 분석 과정   
-**Initialize**
+
+
+### 2.1 데이터 구조확인  
+**Initialize**  
+
 ```{r}
 rm(list=ls())
 library(ggplot2)
@@ -80,15 +84,13 @@ train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
 ```
 
-
-
-### 2.1 데이터 구조확인  
-
 ```{r}  
 colSums(is.na(train))
 colSums(is.na(test))
 str(c(train, test))
 ```
+  
+---
 
 -> NA값은 존재하지 않는다는 것을 확인할 수 있다.  
 
@@ -119,7 +121,8 @@ casual일때 더 많이 빌릴까? registered일때 더 많이 빌릴까?
 Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?  
 변수간의 Correration 확인해볼수 있을것 같다.  
   
-  
+
+---
 ### 2.3 Exproratory Data Analysis (EDA)  
 
 **Preparing Total data**  
@@ -139,7 +142,13 @@ nrow(data)
 length(table(data$datetime))
 ```
 
--> 모두 다른값을 보임을 알 수 있음.
+-> 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.  
+
+```{r}
+with(data, plot(y~as.factor(datetime)))
+```
+-> 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.  
+따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
 
 **season**  
 팩터들의 이름을 부여한다.
@@ -200,11 +209,15 @@ ggplot(data = train, aes(x = holiday, y = y)) +
 -> Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
+  
+---
+
 ### Data Preprocessing
 **변수 별 성질과 특성을 고려하여, 정확한 type으로 변환하기.**
 
 
-**datetime**
+**datetime**  
+
 - 연월일 / 시간 -> 월별로 계절을 나누는게 어느정도 정확하지 않을까?  
 - 시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.  
 
