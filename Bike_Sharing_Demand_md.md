@@ -269,6 +269,7 @@ table(data$holiday)
     ##       16879         500
 
 -&gt; Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
+
 -&gt; count에 영향을 주지 않는다.
 
 ``` r
