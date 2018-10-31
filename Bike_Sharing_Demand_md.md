@@ -380,9 +380,12 @@ cor(num_train)[,5]
 
 -&gt; 각각의 상관계수를 확인할 수 있다.
 
+\*\*
 <center>
-**Pair plot 그리기**
+Pair plot 그리기
 </center>
+\*\*
+
 시각화를 통해서 상관관계를 다시 확인한다.
 
 ``` r
