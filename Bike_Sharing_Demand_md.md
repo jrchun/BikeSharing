@@ -27,30 +27,26 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 1.  datetime - hourly date + timestamp
 
 2.  season
+    -   1 : spring
+    -   2 : summer
+    -   3 : fall
+    -   4 : winter
+3.  holiday - whether the day is considered a holiday (휴일)
 
--   1 : spring
--   2 : summer
--   3 : fall
--   4 : winter
+4.  workingday - whether the day is neither a weekend nor holiday (주말도, 휴일도 아닌 날)
 
-1.  holiday - whether the day is considered a holiday (휴일)
+5.  weather
+    -   1: Clear, Few clouds, Partly cloudy, Partly cloudy
+    -   2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+    -   3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+    -   4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+6.  temp - temperature in Celsius(섭씨) -&gt; 실제온도.
 
-2.  workingday - whether the day is neither a weekend nor holiday (주말도, 휴일도 아닌 날)
+7.  atemp - "feels like" temperature in Celsius (체감온도)
 
-3.  weather
+8.  humidity - relative humidity (습기)
 
--   1: Clear, Few clouds, Partly cloudy, Partly cloudy
--   2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
--   3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
--   4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
-
-1.  temp - temperature in Celsius(섭씨) -&gt; 실제온도.
-
-2.  atemp - "feels like" temperature in Celsius (체감온도)
-
-3.  humidity - relative humidity (습기)
-
-4.  windspeed - wind speed (풍속)
+9.  windspeed - wind speed (풍속)
 
 **Train에만 있는 것. (종속변수)**
 
@@ -349,7 +345,7 @@ ggplot(data = data, aes(x = weather, y = y))+
 
 -&gt; 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.
 
-**Numerical data Exploring**
+**Numeric data Exploring**
 
 temp, atemp, humidity, windspeed 모두 수치형 데이터이며, 이중 주목할 것은 temp(온도)와 atemp(체감온도) 일 것이다.
 따라서 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.
@@ -369,7 +365,7 @@ cor(num_data)
 
 **각 연속형 변수의 히스토그램과, 종속변수와의 상관계수 확인**
 
-test data에는 y값이 존재하지 않으므로, train data에서 numerical data를 추출하여 correlation을 계산한다.
+test data에는 y값이 존재하지 않으므로, train data에서 numeric data를 추출하여 correlation을 계산한다.
 
 ``` r
 num_train <- train[, c('temp', 'atemp', 'humidity', 'windspeed', 'y')]
@@ -493,65 +489,69 @@ ggplot(data, aes(x = time, y = y)) +
 data <- subset(data, select = -c(daytime))
 ```
 
-**연도 추출**
+**연도, 월 추출**
 
 ``` r
-data$datetime <- substr(data$datetime, 1, 4)
-data$datetime <- as.factor(data$datetime)
+data$year <- substr(data$datetime, 1, 4)
+data$year <- as.factor(data$year)
+data$month <- substr(data$datetime, 6, 7)
+data$month <- as.factor(data$month)
+data <- subset(data, select = -c(datetime))
 ```
+
+-&gt; datetime에서 일자를 사용하지 않는이유 : test와 train의 일자가 모두 다르기 때문.
+
+**season**
+
+EDA과정에서 약간의 영향력을 확인했기 때문에, 따로 처리하지 않도록 한다.
 
 **Holiday**
 
 위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다. -&gt; 지워버리자. workingday 데이터만 사용
 
 ``` r
-data <- data[,-3]
+data <- subset(data, select = -c(holiday))
 ```
 
 **workingday**
 
-범주형 변수로 변환 후에, 이름을 부여한다.
-
-``` r
-data$workingday <- as.factor(data$workingday)
-```
+holiday 변수의 삭제로 workingday 변수 역시 큰 영향을 끼치지 않아 보이지만, 남겨놓고 분석을 시도해보기로 한다.
 
 **weather**
-범주형 변수로 변환
+
+4번 범주(악천후)에 속하는 데이터가 3개밖에 존재하지 않는 것을 확인했으므로, 이를 다른 범주로 치환해야 한다.
 
 ``` r
-data$weather <- as.factor(data$weather)
-str(data)
+which(data$weather == 4)
 ```
 
-    ## 'data.frame':    17379 obs. of  12 variables:
-    ##  $ datetime  : Factor w/ 2 levels "2011","2012": 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ workingday: Factor w/ 2 levels "non workingday",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ weather   : Factor w/ 4 levels "1","2","3","4": 1 1 1 1 1 2 1 1 1 1 ...
-    ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
-    ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
-    ##  $ humidity  : int  81 80 80 75 75 75 80 86 75 76 ...
-    ##  $ windspeed : num  0 0 0 0 0 ...
-    ##  $ casual    : int  3 8 5 3 0 0 2 1 1 8 ...
-    ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
-    ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
-    ##  $ time      : Factor w/ 24 levels "0:00","1:00",..: 1 2 13 18 19 20 21 22 23 24 ...
+    ## [1]  5632 11041 14135
 
-더 관찰할 만한 변수 없어? 확인해보자.
--------------------------------------
+``` r
+data[which(data$weather == 4)-1,'weather']
+```
 
-correration of numeric data.
-============================
+    ## [1] 3 3 3
 
-각 범주별로 온도와 count등의 분포를 알고싶다.
-=============================================
+``` r
+data[which(data$weather == 4),'weather']
+```
 
-str(data.all) library(ggplot2)
+    ## [1] 4 4 4
 
-ggplot(data = data.all, aes(x = season, y = count))+ geom\_point(alpha = 0.1) \#\#봄을 제외하고는 딱히 분포가 보이지 않는다.
+``` r
+data[which(data$weather == 4)+1,'weather']
+```
 
-ggplot(data = data.all, aes(x = weather, y = count))+ geom\_point(alpha = 0.1) table(data.all$weather) \#weather가 4인 데이터가 단 3개밖에 존재하지 X \#다른범주에 넣어버리자. which(data.all$weather == 4) data.all\[which(data.all$weather == 4),\] data.all\[which(data.all$weather == 4)-1,\] data.all\[which(data.all$weather == 4)+1,\] \#3개의 데이터 모두 전날에 날씨변수가 3이었음. 3으로 통합해도 되겠다. data.all\[which(data.all$weather == 4), 5\] = '3'
+    ## [1] 3 3 3
+
+-&gt; 3개의 데이터 모두 전후일에 날씨변수가 3이었다. 이에 따라서 모든 범주 4를 범주 3으로 치환한다.
+
+``` r
+data[which(data$weather == 4), 'weather'] = '3'
+```
+
+**correration of numeric data**
 
 str(data.all) table(data.all*w**e**a**t**h**e**r*, *u**s**e**N**A* = ′*a**l**w**a**y**s*′)*d**a**t**a*.*a**l**l*weather &lt;- factor(data.all$weather) \#\#weather level의 4삭제. hist(data.all$windspeed)
 
