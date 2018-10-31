@@ -515,7 +515,7 @@ data <- subset(data, select = -c(holiday))
 
 **workingday**
 
-holiday 변수의 삭제로 workingday 변수 역시 큰 영향을 끼치지 않아 보이지만, 남겨놓고 분석을 시도해보기로 한다.
+workingday 변수 역시 큰 영향을 끼치지 않아 보이지만, holiday 변수의 삭제로 인해 이 변수는 남겨놓고 분석을 시도해보기로 한다.
 
 **weather**
 
@@ -552,17 +552,66 @@ data[which(data$weather == 4), 'weather'] = '3'
 data$weather <- as.factor(data$weather)
 ```
 
-**correration of numeric data**
+**Numeric data**
 
-str(data.all) table(data.all*w**e**a**t**h**e**r*, *u**s**e**N**A* = ′*a**l**w**a**y**s*′)*d**a**t**a*.*a**l**l*weather &lt;- factor(data.all$weather) \#\#weather level의 4삭제. hist(data.all$windspeed)
+Numeric data는 따로 처리하지 않도록 한다.
+-&gt; 파생변수를 만들어서 한번에 처리할 수 있다면?
 
-par(mfrow = c(2,1)) hist(train*t**e**m**p*)*h**i**s**t*(*t**r**a**i**n*atemp) with(train, plot(count~temp)) with(train, plot(count~atemp)) cor(train*t**e**m**p*, *t**r**a**i**n*atemp) \#\#temp와 atemp의 multicollinearity 발견!
+**불쾌지수 변수 만들기**
 
-hist(train*t**e**m**p*)*h**i**s**t*(*t**r**a**i**n*temp)
+``` r
+discomfort <- with(data, (9/5)*temp-
+                     0.55*(1-(humidity/100))*((9/5)*temp-26)+32)
+data <- cbind(data, discomfort)
+```
+
+**상관계수 확인하기(불쾌지수 추가)**
+
+``` r
+num_data_2 <- data[which(!is.na(data$y)), c('temp', 'atemp', 'humidity', 'windspeed','discomfort', 'y')]
+cor(num_data_2)
+```
+
+    ##                   temp       atemp    humidity   windspeed  discomfort
+    ## temp        1.00000000  0.98494811 -0.06494877 -0.01785201  0.98683890
+    ## atemp       0.98494811  1.00000000 -0.04353571 -0.05747300  0.97367141
+    ## humidity   -0.06494877 -0.04353571  1.00000000 -0.31860699  0.03457894
+    ## windspeed  -0.01785201 -0.05747300 -0.31860699  1.00000000 -0.03726081
+    ## discomfort  0.98683890  0.97367141  0.03457894 -0.03726081  1.00000000
+    ## y           0.39445364  0.38978444 -0.31737148  0.10136947  0.34551225
+    ##                     y
+    ## temp        0.3944536
+    ## atemp       0.3897844
+    ## humidity   -0.3173715
+    ## windspeed   0.1013695
+    ## discomfort  0.3455122
+    ## y           1.0000000
+
+-&gt; temp와 atemp, discomfort와의 multiple correlation을 확인하고, 변수 처리방안을 고민한다.
+
+**windspeed**
+Boxplot을 통한 풍속과 날씨의 연관성 확인
+
+``` r
+with(data, plot(windspeed~weather))
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png) -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
+
+------------------------------------------------------------------------
 
 ### Modeling
 
-train1 &lt;- data.all\[1:nrow(train), \] test1 &lt;- data.all\[10887:nrow(data.all), \] nrow(test1) head(train1) hist(train1$count) \#변수변환 고려할 것.
+모형 적합 이전에 y의 분포를 확인해보자.
+
+``` r
+train1 <- data[1 : nrow(train), ]
+test1 <- data[nrow(train) + 1 : nrow(data), ]
+hist(train1$y)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png) -&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
+-&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
 
 환경에 따른 modeling -&gt; casual과 registered를 제외한다.
 ==========================================================
