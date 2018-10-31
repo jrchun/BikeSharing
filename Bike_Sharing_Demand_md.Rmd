@@ -427,6 +427,7 @@ data[which(data$weather == 4)+1,'weather']
 
 ```{r}
 data[which(data$weather == 4), 'weather'] = '3'
+data$weather <- as.factor(data$weather)
 ```
 
 **correration of numeric data**  
