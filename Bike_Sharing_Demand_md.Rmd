@@ -80,6 +80,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 rm(list=ls())
 library(ggplot2)
 library(corrplot)
+library(dplyr)
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -131,8 +132,8 @@ Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 
 ```{r}
 test[,c('casual', 'registered', 'count')] <- NA
-colnames(train)[12] <- 'y'
-colnames(test)[12] <- 'y'
+train <- rename(train, 'y' = 'count')
+test <- rename(test, 'y' = 'count')
 data <- rbind(train, test)
 str(data)
 ```  
@@ -162,9 +163,9 @@ data$season[which(data$season == 1)] <- 'spring'
 data$season[which(data$season == 2)] <- 'summer'
 data$season[which(data$season == 3)] <- 'fall'
 data$season[which(data$season == 4)] <- 'winter'
-data$season <- as.factor(data$season)
+data$season <- factor(data$season,
+                         levels = c('spring', 'summer', 'fall', 'winter'))
 levels(data$season)
-data$season <- factor(data$season, levels(data$season)[c(2, 3, 1, 4)])
 ```
 계절에 따른 y값의 모양을 상자그림을 통하여 실시하려고 한다.  
 단 2가지 방법으로 표현해보도록 하자.  
@@ -322,25 +323,25 @@ data$time <- substr(data$datetime, 12, nchar(data$datetime))
 
 **time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.**
 ```{r}
-dawnidx <- which(data$time == '0:00'
+dawnidx <- which(data$time == '0:00'  #data$time %in% paste0(0:5, ":00")
                | data$time == '1:00'
                | data$time == '2:00'
                | data$time == '3:00'
                | data$time == '4:00'
                | data$time == '5:00')
-morningidx <- which(data$time == '6:00'
+morningidx <- which(data$time == '6:00'  #data$time %in% paste0(6:11, ":00")
                     | data$time == '7:00'
                     | data$time == '8:00'
                     | data$time == '9:00'
                     | data$time == '10:00'
                     | data$time == '11:00')
-afternoonidx <- which(data$time == '12:00'
+afternoonidx <- which(data$time == '12:00'  #data$time %in% paste0(12:17, ":00")
                       | data$time == '13:00'
                       | data$time == '14:00'
                       | data$time == '15:00'
                       | data$time == '16:00'
                       | data$time == '17:00')
-nightidx <- which(data$time == '18:00'
+nightidx <- which(data$time == '18:00'  #data$time %in% paste0(18:23, ":00")
                   | data$time == '19:00'
                   | data$time == '20:00'
                   | data$time == '21:00'
