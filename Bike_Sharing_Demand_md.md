@@ -367,7 +367,11 @@ cor(num_data)
 
 -&gt; 예상대로 temp와 atemp의 상관관계를 확인할 수 있었다.
 
-**각 연속형 변수의 히스토그램과, 종속변수와의 상관계수 확인**
+\*\*
+<center>
+각 연속형 변수의 히스토그램과, 종속변수와의 상관계수 확인
+</center>
+\*\*
 test data에는 y값이 존재하지 않으므로, train data에서 numerical data를 추출하여 correlation을 계산한다.
 
 ``` r
@@ -380,12 +384,9 @@ cor(num_train)[,5]
 
 -&gt; 각각의 상관계수를 확인할 수 있다.
 
-\*\*
 <center>
 Pair plot 그리기
 </center>
-\*\*
-
 시각화를 통해서 상관관계를 다시 확인한다.
 
 ``` r
