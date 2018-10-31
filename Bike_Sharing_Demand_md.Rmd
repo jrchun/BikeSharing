@@ -419,9 +419,9 @@ workingday 변수 역시 큰 영향을 끼치지 않아 보이지만, holiday �
 
 ```{r}
 which(data$weather == 4)
-data[which(data$weather == 4)-1,'weather']
+data[which(data$weather == 4)-1,'weather'] #전날
 data[which(data$weather == 4),'weather']
-data[which(data$weather == 4)+1,'weather']
+data[which(data$weather == 4)+1,'weather'] #다음날
 ```
 -> 3개의 데이터 모두 전후일에 날씨변수가 3이었다. 이에 따라서 모든 범주 4를 범주 3으로 치환한다.  
 
@@ -433,6 +433,7 @@ data$weather <- as.factor(data$weather)
 **Numeric data**  
 
 Numeric data는 따로 처리하지 않도록 한다.  
+
 -> 파생변수를 만들어서 한번에 처리할 수 있다면?  
 
 **불쾌지수 변수 만들기**  
@@ -452,11 +453,14 @@ cor(num_data_2)
 -> temp와 atemp, discomfort와의 multiple correlation을 확인하고, 변수 처리방안을 고민한다.  
 
 **windspeed**  
-Boxplot을 통한 풍속과 날씨의 연관성 확인  
+
+Boxplot을 통한 풍속과 날씨의 연관성 확인   
+
 
 ```{r}
 with(data, plot(windspeed~weather))
 ```
+
 -> 큰 영향을 보이지 않는 것 같아 보인다.  
 
 ---  
@@ -470,8 +474,11 @@ train1 <- data[1 : nrow(train), ]
 test1 <- data[nrow(train) + 1 : nrow(data), ]
 hist(train1$y)
 ```
+
 -> 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.  
--> 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
+
+-> 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.  
+
 
 
 

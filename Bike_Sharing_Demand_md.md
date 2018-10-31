@@ -528,7 +528,7 @@ which(data$weather == 4)
     ## [1]  5632 11041 14135
 
 ``` r
-data[which(data$weather == 4)-1,'weather']
+data[which(data$weather == 4)-1,'weather'] #전날
 ```
 
     ## [1] 3 3 3
@@ -540,7 +540,7 @@ data[which(data$weather == 4),'weather']
     ## [1] 4 4 4
 
 ``` r
-data[which(data$weather == 4)+1,'weather']
+data[which(data$weather == 4)+1,'weather'] #다음날
 ```
 
     ## [1] 3 3 3
@@ -555,6 +555,7 @@ data$weather <- as.factor(data$weather)
 **Numeric data**
 
 Numeric data는 따로 처리하지 않도록 한다.
+
 -&gt; 파생변수를 만들어서 한번에 처리할 수 있다면?
 
 **불쾌지수 변수 만들기**
@@ -590,13 +591,16 @@ cor(num_data_2)
 -&gt; temp와 atemp, discomfort와의 multiple correlation을 확인하고, 변수 처리방안을 고민한다.
 
 **windspeed**
+
 Boxplot을 통한 풍속과 날씨의 연관성 확인
 
 ``` r
 with(data, plot(windspeed~weather))
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png) -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
+
+-&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
 ------------------------------------------------------------------------
 
@@ -610,7 +614,10 @@ test1 <- data[nrow(train) + 1 : nrow(data), ]
 hist(train1$y)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png) -&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png)
+
+-&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
+
 -&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
 
 환경에 따른 modeling -&gt; casual과 registered를 제외한다.
