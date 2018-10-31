@@ -367,11 +367,8 @@ cor(num_data)
 
 -&gt; 예상대로 temp와 atemp의 상관관계를 확인할 수 있었다.
 
-\*\*
-<center>
-각 연속형 변수의 히스토그램과, 종속변수와의 상관계수 확인
-</center>
-\*\*
+**각 연속형 변수의 히스토그램과, 종속변수와의 상관계수 확인**
+
 test data에는 y값이 존재하지 않으므로, train data에서 numerical data를 추출하여 correlation을 계산한다.
 
 ``` r
@@ -384,9 +381,8 @@ cor(num_train)[,5]
 
 -&gt; 각각의 상관계수를 확인할 수 있다.
 
-<center>
-Pair plot 그리기
-</center>
+**Pair plot 그리기**
+
 시각화를 통해서 상관관계를 다시 확인한다.
 
 ``` r
@@ -404,7 +400,7 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 **datetime**
 
 -   연월일 / 시간 -&gt; 월별로 계절을 나누는게 어느정도 정확하지 않을까?
--   시간대별로 다른 대여수? 버리고 싶지만.. 시간대별로 온도가 너무 다르다.
+-   시간대별로 다른 대여수? 버리고 싶지만, 시간대별로 온도가 너무 다르다.
 
 -&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
 
@@ -413,7 +409,6 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 ``` r
 sp <- unlist(strsplit(train$datetime, ":"))
 time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
-time <- as.integer(time)
 plot(train$y~time)
 ```
 
@@ -426,14 +421,6 @@ plot(train$y~time)
 ``` r
 data$daytime <- data$datetime
 data$time <- substr(data$datetime, 12, nchar(data$datetime))
-```
-
-**시간나누기**
-
-``` r
-sp <- unlist(strsplit(data$datetime, ":"))
-time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
-data$daytime <- time
 ```
 
 **time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.**
@@ -471,24 +458,40 @@ data$daytime[nightidx] <- 'night'
 
 data$time <- as.factor(data$time)
 data$daytime <- as.factor(data$daytime)
-str(data)
 ```
 
-    ## 'data.frame':    17379 obs. of  14 variables:
-    ##  $ datetime  : chr  "2011-01-01 0:00" "2011-01-01 1:00" "2011-01-01 2:00" "2011-01-01 3:00" ...
-    ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ holiday   : Factor w/ 2 levels "holiday","non holiday": 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ workingday: Factor w/ 2 levels "non workingday",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ weather   : int  1 1 1 1 1 2 1 1 1 1 ...
-    ##  $ temp      : num  9.84 9.02 9.02 9.84 9.84 ...
-    ##  $ atemp     : num  14.4 13.6 13.6 14.4 14.4 ...
-    ##  $ humidity  : int  81 80 80 75 75 75 80 86 75 76 ...
-    ##  $ windspeed : num  0 0 0 0 0 ...
-    ##  $ casual    : int  3 8 5 3 0 0 2 1 1 8 ...
-    ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
-    ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
-    ##  $ daytime   : Factor w/ 4 levels "afternoon","dawn",..: 2 2 2 2 2 2 3 3 3 3 ...
-    ##  $ time      : Factor w/ 24 levels "0:00","1:00",..: 1 2 13 18 19 20 21 22 23 24 ...
+**범주화된 변수로 Box plot 그리기**
+
+``` r
+ggplot(data = data, aes(x = daytime, y = y)) +
+  geom_boxplot(aes(group = daytime)) +
+  aes(fill = daytime) +
+  labs(title = 'Boxplot of Data' ,
+       subtitle = 'Grouped by daytime')
+```
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
+
+**시간 그대로 사용한 산점도 그리기**
+
+``` r
+ggplot(data, aes(x = time, y = y)) +
+  geom_point(size = 2) +
+  labs(title = 'Scatterplot of Data' ,
+       subtitle = 'with Just time')  
+```
+
+    ## Warning: Removed 6493 rows containing missing values (geom_point).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
+
+-&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
+
+``` r
+data <- subset(data, select = -c(daytime))
+```
 
 **연도 추출**
 
@@ -521,7 +524,7 @@ data$weather <- as.factor(data$weather)
 str(data)
 ```
 
-    ## 'data.frame':    17379 obs. of  13 variables:
+    ## 'data.frame':    17379 obs. of  12 variables:
     ##  $ datetime  : Factor w/ 2 levels "2011","2012": 1 1 1 1 1 1 1 1 1 1 ...
     ##  $ season    : Factor w/ 4 levels "spring","summer",..: 1 1 1 1 1 1 1 1 1 1 ...
     ##  $ workingday: Factor w/ 2 levels "non workingday",..: 1 1 1 1 1 1 1 1 1 1 ...
@@ -533,7 +536,6 @@ str(data)
     ##  $ casual    : int  3 8 5 3 0 0 2 1 1 8 ...
     ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
     ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
-    ##  $ daytime   : Factor w/ 4 levels "afternoon","dawn",..: 2 2 2 2 2 2 3 3 3 3 ...
     ##  $ time      : Factor w/ 24 levels "0:00","1:00",..: 1 2 13 18 19 20 21 22 23 24 ...
 
 더 관찰할 만한 변수 없어? 확인해보자.
