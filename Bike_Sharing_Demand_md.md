@@ -10,14 +10,14 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 분석 과정 목차
 --------------
 
-변수 정의
-분석 과정
-1) 데이터 구조 확인
-2) 사전 가설 수립(Make insight)
-3) EDA / Data preprocessing 4) Modeling
-5) MSE Checking
-
-결론
+1.  변수 정의
+2.  분석 과정
+    -   데이터 구조 확인
+    -   사전 가설 수립(Make insight)
+    -   EDA / Data preprocessing
+    -   Modeling
+    -   MSE Checking
+3.  결론
 
 ------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 분석 과정
 ---------
 
-### 2.1 데이터 구조확인
+### 데이터 구조확인
 
 **Initialize**
 
@@ -132,7 +132,7 @@ str(c(train, test))
 
 -&gt; NA값은 존재하지 않는다는 것을 확인할 수 있다.
 
-### 2.2 가설 사전 수립(Make insights)
+### 가설 사전 수립(Make insights)
 
 **Idea 1. train과 test 데이터의 차이점**
 
@@ -155,7 +155,7 @@ Weather는 temp, atemp, humidity와 관계가 밀접하지 않을까?
 
 ------------------------------------------------------------------------
 
-### 2.3 Exproratory Data Analysis (EDA)
+### Exproratory Data Analysis (EDA)
 
 **Preparing Total data**
 
@@ -198,8 +198,10 @@ length(table(data$datetime))
 -&gt; 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.
 
 ``` r
-# with(data, plot(y~as.factor(datetime)))
+with(data, plot(y~as.factor(datetime)))
 ```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 -&gt; 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.
 따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
@@ -351,7 +353,8 @@ ggplot(data = data, aes(x = weather, y = y))+
 
 **Numerical data Exploring**
 
-temp, atemp, humidity, windspeed 모두 수치형 데이터이며, 이중 주목할 것은 temp(온도)와 atemp(체감온도) 일 것이다. 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.
+temp, atemp, humidity, windspeed 모두 수치형 데이터이며, 이중 주목할 것은 temp(온도)와 atemp(체감온도) 일 것이다.
+따라서 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.
 
 ``` r
 num_data <- data[, c('temp', 'atemp', 'humidity', 'windspeed')]
@@ -370,11 +373,11 @@ cor(num_data)
 test data에는 y값이 존재하지 않으므로, train data에서 numerical data를 추출하여 correlation을 계산한다.
 
 ``` r
-num_data_train <- train[, c('temp', 'atemp', 'humidity', 'windspeed')]
-cor(cbind(num_data_train, train$y))[,5]
+num_train <- train[, c('temp', 'atemp', 'humidity', 'windspeed', 'y')]
+cor(num_train)[,5]
 ```
 
-    ##       temp      atemp   humidity  windspeed    train$y 
+    ##       temp      atemp   humidity  windspeed          y 
     ##  0.3944536  0.3897844 -0.3173715  0.1013695  1.0000000
 
 -&gt; 각각의 상관계수를 확인할 수 있다.
@@ -382,7 +385,13 @@ cor(cbind(num_data_train, train$y))[,5]
 **Pair plot 그리기**
 시각화를 통해서 상관관계를 다시 확인한다.
 
--&gt;
+``` r
+corrplot(cor(num_train), method = 'circle', diag = FALSE)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-17-1.png)
+
+-&gt; 상관관계들을 확인할 수 있다.
 
 ------------------------------------------------------------------------
 
