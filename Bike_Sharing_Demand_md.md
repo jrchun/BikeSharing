@@ -72,6 +72,12 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 ``` r
 rm(list=ls())
 library(ggplot2)
+library(corrplot)
+```
+
+    ## corrplot 0.84 loaded
+
+``` r
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -360,7 +366,23 @@ cor(num_data)
 
 -&gt; 예상대로 temp와 atemp의 상관관계를 확인할 수 있었다.
 
-**각 연속형 변수의 히스토그램과, 종속변수와의 상관관계 확인**
+**각 연속형 변수의 히스토그램과, 종속변수와의 상관계수 확인**
+test data에는 y값이 존재하지 않으므로, train data에서 numerical data를 추출하여 correlation을 계산한다.
+
+``` r
+num_data_train <- train[, c('temp', 'atemp', 'humidity', 'windspeed')]
+cor(cbind(num_data_train, train$y))[,5]
+```
+
+    ##       temp      atemp   humidity  windspeed    train$y 
+    ##  0.3944536  0.3897844 -0.3173715  0.1013695  1.0000000
+
+-&gt; 각각의 상관계수를 확인할 수 있다.
+
+**Pair plot 그리기**
+시각화를 통해서 상관관계를 다시 확인한다.
+
+-&gt;
 
 ------------------------------------------------------------------------
 
@@ -382,7 +404,7 @@ time <- as.integer(time)
 plot(train$y~time)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-17-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
