@@ -489,7 +489,7 @@ length(train$y)
 sum(train$y == (train$casual + train$registered))
 ```
 
-y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.  
+-> y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.  
 
 **Data partitioning**  
 
@@ -506,6 +506,41 @@ f1_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspe
 fit1_reg <- lm(formula = f1_reg, data = train1)
 fit1_cas <- lm(formula = f1_cas, data = train1)
 ```
+
+**가정 확인**  
+
+```{r}
+par(mfrow = c(2,2))
+plot(fit1_reg)
+plot(fit1_cas)
+```
+
+-> 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.  
+
+```{r}
+
+```
+
+**Model 2 : Log-transformation with Model 1**  
+각각의 종속변수는 0이상의 정수이므로 1을 더한뒤에 log변환을 시도한다.  
+
+```{r}
+f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+fit2_reg <- lm(formula = f2_reg, data = train1)
+fit2_cas <- lm(formula = f2_cas, data = train1)
+```
+
+**가정 확인**  
+
+```{r}
+par(mfrow = c(2,2))
+plot(fit1_reg)
+plot(fit1_cas)
+```
+
+-> 변환 전에 비해, 나아진 모습을 보인다.  
+
 
 
 summary(fit1)

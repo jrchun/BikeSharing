@@ -646,7 +646,7 @@ sum(train$y == (train$casual + train$registered))
 
     ## [1] 10886
 
-y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.
+-&gt; y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.
 
 **Data partitioning**
 
@@ -663,6 +663,50 @@ f1_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspe
 fit1_reg <- lm(formula = f1_reg, data = train1)
 fit1_cas <- lm(formula = f1_cas, data = train1)
 ```
+
+**가정 확인**
+
+``` r
+par(mfrow = c(2,2))
+plot(fit1_reg)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-33-1.png)
+
+``` r
+plot(fit1_cas)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-33-2.png)
+
+-&gt; 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.
+
+**Model 2 : Log-transformation with Model 1**
+각각의 종속변수는 0이상의 정수이므로 1을 더한뒤에 log변환을 시도한다.
+
+``` r
+f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+fit2_reg <- lm(formula = f2_reg, data = train1)
+fit2_cas <- lm(formula = f2_cas, data = train1)
+```
+
+**가정 확인**
+
+``` r
+par(mfrow = c(2,2))
+plot(fit1_reg)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-1.png)
+
+``` r
+plot(fit1_cas)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-2.png)
+
+-&gt; 변환 전에 비해, 나아진 모습을 보인다.
 
 summary(fit1) par(mfrow = c(2,2)) plot(fit1) \#정규성가정 개무시. \#MSE pred1 &lt;- predict(fit1, newdata = test1) sum((test1$count-pred1)^2) / ncol(test1) \#RMSE sqrt(sum((test1$count-pred1)^2) / ncol(test1))
 
