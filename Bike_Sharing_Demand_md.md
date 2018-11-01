@@ -209,8 +209,10 @@ length(table(data$datetime))
 -&gt; 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.
 
 ``` r
-# with(data, plot(y~as.factor(datetime)))
+with(data, plot(y~as.factor(datetime)))
 ```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 -&gt; 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.
 따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
@@ -422,42 +424,53 @@ plot(train$y~time)
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
+``` r
+sp <- unlist(strsplit(data$datetime, ":"))
+time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
+data$time <- as.integer(time)
+ggplot(data = data, aes(x = time, y = y)) +
+  geom_point() +
+  labs(title = 'Scatter plot of data',
+       subtitle = 'with time')
+```
+
+    ## Warning: Removed 6493 rows containing missing values (geom_point).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
+
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
 **날짜로 시간대 나누기**
 
-``` r
-data$daytime <- data$datetime
-data$time <- substr(data$datetime, 12, nchar(data$datetime))
-```
-
-**time : 0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.**
+0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.
 
 ``` r
-dawnidx <- which(data$time == '0:00'  #data$time %in% paste0(0:5, ":00")
-               | data$time == '1:00'
-               | data$time == '2:00'
-               | data$time == '3:00'
-               | data$time == '4:00'
-               | data$time == '5:00')
-morningidx <- which(data$time == '6:00'  #data$time %in% paste0(6:11, ":00")
-                    | data$time == '7:00'
-                    | data$time == '8:00'
-                    | data$time == '9:00'
-                    | data$time == '10:00'
-                    | data$time == '11:00')
-afternoonidx <- which(data$time == '12:00'  #data$time %in% paste0(12:17, ":00")
-                      | data$time == '13:00'
-                      | data$time == '14:00'
-                      | data$time == '15:00'
-                      | data$time == '16:00'
-                      | data$time == '17:00')
-nightidx <- which(data$time == '18:00'  #data$time %in% paste0(18:23, ":00")
-                  | data$time == '19:00'
-                  | data$time == '20:00'
-                  | data$time == '21:00'
-                  | data$time == '22:00'
-                  | data$time == '23:00')
+dawnidx <- which(data$time == 0  #data$time %in% paste0(0:5, ":00")
+               | data$time == 1
+               | data$time == 2
+               | data$time == 3
+               | data$time == 4
+               | data$time == 5)
+morningidx <- which(data$time == 6  #data$time %in% paste0(6:11, ":00")
+                    | data$time == 7
+                    | data$time == 8
+                    | data$time == 9
+                    | data$time == 10
+                    | data$time == 11)
+afternoonidx <- which(data$time == 12  #data$time %in% paste0(12:17, ":00")
+                      | data$time == 13
+                      | data$time == 14
+                      | data$time == 15
+                      | data$time == 16
+                      | data$time == 17)
+nightidx <- which(data$time == 18  #data$time %in% paste0(18:23, ":00")
+                  | data$time == 19
+                  | data$time == 20
+                  | data$time == 21
+                  | data$time == 22
+                  | data$time == 23)
+
+data$daytime <- data$time
 
 data$daytime[dawnidx] <- 'dawn'
 data$daytime[morningidx] <- 'morning'
@@ -481,19 +494,6 @@ ggplot(data = data, aes(x = daytime, y = y)) +
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
-
-**시간 그대로 사용한 산점도 그리기**
-
-``` r
-ggplot(data, aes(x = time, y = y)) +
-  geom_point(size = 2) +
-  labs(title = 'Scatterplot of Data' ,
-       subtitle = 'with Just time')  
-```
-
-    ## Warning: Removed 6493 rows containing missing values (geom_point).
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -534,27 +534,22 @@ workingday 변수 역시 큰 영향을 끼치지 않아 보이지만, holiday �
 4번 범주(악천후)에 속하는 데이터가 3개밖에 존재하지 않는 것을 확인했으므로, 이를 다른 범주로 치환해야 한다.
 
 ``` r
-which(data$weather == 4)
+list(Index = which(data$weather == 4),
+     Previous_day = data[which(data$weather == 4)-1,'weather'],
+     Level4_day = data[which(data$weather == 4),'weather'],
+     Next_day = data[which(data$weather == 4)+1,'weather'])
 ```
 
+    ## $Index
     ## [1]  5632 11041 14135
-
-``` r
-data[which(data$weather == 4)-1,'weather'] #전날
-```
-
+    ## 
+    ## $Previous_day
     ## [1] 3 3 3
-
-``` r
-data[which(data$weather == 4),'weather']
-```
-
+    ## 
+    ## $Level4_day
     ## [1] 4 4 4
-
-``` r
-data[which(data$weather == 4)+1,'weather'] #다음날
-```
-
+    ## 
+    ## $Next_day
     ## [1] 3 3 3
 
 -&gt; 3개의 데이터 모두 전후일에 날씨변수가 3이었다. 이에 따라서 모든 범주 4를 범주 3으로 치환한다.
@@ -575,7 +570,7 @@ Numeric data는 따로 처리하지 않도록 한다.
 ``` r
 discomfort <- with(data, (9/5)*temp-
                      0.55*(1-(humidity/100))*((9/5)*temp-26)+32)
-data <- cbind(data, discomfort)
+data$discomfort <- discomfort
 ```
 
 **상관계수 확인하기(불쾌지수 추가)**
@@ -607,10 +602,14 @@ cor(num_data_2)
 Boxplot을 통한 풍속과 날씨의 연관성 확인
 
 ``` r
-with(data, plot(windspeed~weather))
+ggplot(data = data, aes(x = weather, y = windspeed)) +
+  geom_boxplot(aes(group = weather)) +
+  aes(fill = weather) +
+  labs(title = 'Boxplot of Data(windspeed)' ,
+       subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -626,7 +625,18 @@ test1 <- data[nrow(train) + 1 : nrow(data), ]
 hist(train1$y)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
+
+``` r
+ggplot(data = data, aes(data$y))+
+     geom_histogram()
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-2.png)
 
 -&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
 
