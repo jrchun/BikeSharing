@@ -215,6 +215,7 @@ with(data, plot(y~as.factor(datetime)))
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 -&gt; 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.
+
 따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
 
 **season**
@@ -403,6 +404,23 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 
 -&gt; 상관관계들을 확인할 수 있다.
 
+**Checking Y**
+
+``` r
+ggplot(data = data, aes(data$y))+
+     geom_histogram()
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
+
+-&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
+
+-&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
+
 ------------------------------------------------------------------------
 
 ### Data Preprocessing
@@ -422,7 +440,7 @@ time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
 plot(train$y~time)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
 ``` r
 sp <- unlist(strsplit(data$datetime, ":"))
@@ -436,7 +454,7 @@ ggplot(data = data, aes(x = time, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
@@ -493,7 +511,7 @@ ggplot(data = data, aes(x = daytime, y = y)) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -609,7 +627,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -617,35 +635,39 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
 
 ### Modeling
 
-모형 적합 이전에 y의 분포를 확인해보자.
+**Model 1 : Idea 1 을 활용**
+
+``` r
+length(train$y)
+```
+
+    ## [1] 10886
+
+``` r
+sum(train$y == (train$casual + train$registered))
+```
+
+    ## [1] 10886
+
+y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.
+
+**Data partitioning**
 
 ``` r
 train1 <- data[1 : nrow(train), ]
 test1 <- data[nrow(train) + 1 : nrow(data), ]
-hist(train1$y)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
+**환경에 따른 modeling**
 
 ``` r
-ggplot(data = data, aes(data$y))+
-     geom_histogram()
+f1_reg <- formula(registered ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+f1_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+fit1_reg <- lm(formula = f1_reg, data = train1)
+fit1_cas <- lm(formula = f1_cas, data = train1)
 ```
 
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-
-    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-2.png)
-
--&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
-
--&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
-
-환경에 따른 modeling -&gt; casual과 registered를 제외한다.
-==========================================================
-
-fit1 &lt;- lm(count ~ datetime+season+workingday+weather+temp+atemp+humidity+windspeed+time, data = train1) summary(fit1) par(mfrow = c(2,2)) plot(fit1) \#정규성가정 개무시. \#MSE pred1 &lt;- predict(fit1, newdata = test1) sum((test1$count-pred1)^2) / ncol(test1) \#RMSE sqrt(sum((test1$count-pred1)^2) / ncol(test1))
+summary(fit1) par(mfrow = c(2,2)) plot(fit1) \#정규성가정 개무시. \#MSE pred1 &lt;- predict(fit1, newdata = test1) sum((test1$count-pred1)^2) / ncol(test1) \#RMSE sqrt(sum((test1$count-pred1)^2) / ncol(test1))
 
 변수변환
 --------

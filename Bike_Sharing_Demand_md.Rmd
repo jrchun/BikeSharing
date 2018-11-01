@@ -152,6 +152,7 @@ with(data, plot(y~as.factor(datetime)))
 ```
 
 -> 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.  
+
 따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
 
 **season**  
@@ -291,6 +292,17 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 ```
 
 -> 상관관계들을 확인할 수 있다.  
+
+**Checking Y**
+
+```{r}
+ggplot(data = data, aes(data$y))+
+     geom_histogram()
+```
+
+-> 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.  
+
+-> 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.  
 
 ---
 
@@ -472,25 +484,32 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
 
 ###Modeling  
 
-모형 적합 이전에 y의 분포를 확인해보자.  
+**Model 1 : Idea 1 을 활용**  
+
+```{r}
+length(train$y)
+sum(train$y == (train$casual + train$registered))
+```
+
+y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.  
+
+**Data partitioning**  
 
 ```{r}
 train1 <- data[1 : nrow(train), ]
 test1 <- data[nrow(train) + 1 : nrow(data), ]
-hist(train1$y)
-ggplot(data = data, aes(data$y))+
-     geom_histogram()
 ```
 
--> 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.  
+**환경에 따른 modeling**  
 
--> 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.  
+```{r}
+f1_reg <- formula(registered ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+f1_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+fit1_reg <- lm(formula = f1_reg, data = train1)
+fit1_cas <- lm(formula = f1_cas, data = train1)
+```
 
 
-
-
-#환경에 따른 modeling -> casual과 registered를 제외한다.
-fit1 <- lm(count ~ datetime+season+workingday+weather+temp+atemp+humidity+windspeed+time, data = train1)
 summary(fit1)
 par(mfrow = c(2,2))
 plot(fit1)
