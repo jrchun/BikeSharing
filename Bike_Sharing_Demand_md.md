@@ -209,8 +209,13 @@ length(table(data$datetime))
 -&gt; 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.
 
 ``` r
-with(data, plot(y~as.factor(datetime)))
+ggplot(data = data, aes(x = datetime, y = y)) +
+  geom_point() +
+  labs(title = 'Scatter plot of data',
+       subtitle = 'with datetime')
 ```
+
+    ## Warning: Removed 6493 rows containing missing values (geom_point).
 
 ![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
@@ -241,7 +246,7 @@ levels(data$season)
     ## [1] "spring" "summer" "fall"   "winter"
 
 계절에 따른 y값의 모양을 상자그림을 통하여 실시하려고 한다.
-단 2가지 방법으로 표현해보도록 하자.
+단 2가지 방법으로 표현해보도록 하자.(이후 표현은 ggplot으로 통일한다.)
 
 **A. Box Plot으로 그리기**
 
@@ -435,14 +440,6 @@ ggplot(data = data, aes(data$y))+
 **시간 분할해서 plot그려보기.**
 
 ``` r
-sp <- unlist(strsplit(train$datetime, ":"))
-time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
-plot(train$y~time)
-```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
-
-``` r
 sp <- unlist(strsplit(data$datetime, ":"))
 time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
 data$time <- as.integer(time)
@@ -454,7 +451,7 @@ ggplot(data = data, aes(x = time, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
@@ -511,7 +508,7 @@ ggplot(data = data, aes(x = daytime, y = y)) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -627,7 +624,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
