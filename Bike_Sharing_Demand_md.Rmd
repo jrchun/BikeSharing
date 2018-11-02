@@ -265,7 +265,7 @@ ggplot(data = data, aes(x = weather, y = y))+
 **Numeric data Exploring**  
 
 temp, atemp, humidity, windspeed 모두 수치형 데이터이며, 이중 주목할 것은 temp(온도)와 atemp(체감온도) 일 것이다.  
-따라서 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.  
+-> 따라서 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.  
 
 ```{r}
 num_data <- data[, c('temp', 'atemp', 'humidity', 'windspeed')]
