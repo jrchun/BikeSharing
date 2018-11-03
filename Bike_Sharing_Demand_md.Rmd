@@ -496,7 +496,7 @@ sum(train$y == (train$casual + train$registered))
 
 ```{r}
 train1 <- data[1 : nrow(train), ]
-test1 <- data[nrow(train) + 1 : nrow(data), ]
+test1 <- data[-c(1:nrow(train)), ]
 ```
 
 **환경에 따른 modeling**  
