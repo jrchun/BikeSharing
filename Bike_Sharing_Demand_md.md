@@ -716,6 +716,12 @@ plot(fit1_cas)
 
 **Return to Data partition**
 
+Caret 패키지를 활용한 모형 학습
+
+``` r
+CV_IDX <- createMultiFolds(train1$y, k = 10, times = 3)
+```
+
 MSE
 ===
 

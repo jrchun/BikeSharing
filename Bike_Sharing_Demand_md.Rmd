@@ -538,7 +538,15 @@ plot(fit1_cas)
 
 -> 변환 전에 비해, 나아진 모습을 보인다.  
 
-**Return to Data partition**
+**Return to Data partition**  
+
+Caret 패키지를 활용한 모형 학습
+```{r}
+CV_IDX <- createMultiFolds(train1$y, k = 10, times = 3)
+
+
+```
+
 
 
 #MSE
