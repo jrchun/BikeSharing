@@ -67,14 +67,14 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 
 ``` r
 rm(list=ls())
-library(ggplot2)
-library(corrplot)
+library(ggplot2)  #for plotting
+library(corrplot) #for correlation plot
 ```
 
     ## corrplot 0.84 loaded
 
 ``` r
-library(dplyr)
+library(dplyr)    #for %in% function
 ```
 
     ## 
@@ -87,6 +87,12 @@ library(dplyr)
     ## The following objects are masked from 'package:base':
     ## 
     ##     intersect, setdiff, setequal, union
+
+``` r
+library(caret)    #for cross validation
+```
+
+    ## Loading required package: lattice
 
 ``` r
 setwd('C:\\github\\Project\\BikeSharing')
@@ -698,17 +704,22 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-2.png)
 
 -&gt; 변환 전에 비해, 나아진 모습을 보인다.
 
-summary(fit1) par(mfrow = c(2,2)) plot(fit1) \#정규성가정 개무시. \#MSE pred1 &lt;- predict(fit1, newdata = test1) sum((test1$count-pred1)^2) / ncol(test1) \#RMSE sqrt(sum((test1$count-pred1)^2) / ncol(test1))
+**Return to Data partition**
+
+MSE
+===
+
+pred1 &lt;- predict(fit1, newdata = test1) sum((test1$count-pred1)^2) / ncol(test1) \#RMSE sqrt(sum((test1$count-pred1)^2) / ncol(test1))
 
 변수변환
 --------

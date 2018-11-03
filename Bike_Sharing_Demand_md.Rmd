@@ -78,9 +78,10 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 
 ```{r}
 rm(list=ls())
-library(ggplot2)
-library(corrplot)
-library(dplyr)
+library(ggplot2)  #for plotting
+library(corrplot) #for correlation plot
+library(dplyr)    #for %in% function
+library(caret)    #for cross validation
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -517,10 +518,6 @@ plot(fit1_cas)
 
 -> 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.  
 
-```{r}
-
-```
-
 **Model 2 : Log-transformation with Model 1**  
 각각의 종속변수는 0이상의 정수이므로 1을 더한뒤에 log변환을 시도한다.  
 
@@ -541,12 +538,9 @@ plot(fit1_cas)
 
 -> 변환 전에 비해, 나아진 모습을 보인다.  
 
+**Return to Data partition**
 
 
-summary(fit1)
-par(mfrow = c(2,2))
-plot(fit1)
-#정규성가정 개무시.
 #MSE
 pred1 <- predict(fit1, newdata = test1)
 sum((test1$count-pred1)^2) / ncol(test1)
