@@ -540,10 +540,31 @@ plot(fit1_cas)
 
 **Return to Data partition**  
 
-Caret 패키지를 활용한 모형 학습
-```{r}
-CV_IDX <- createMultiFolds(train1$y, k = 10, times = 3)
+carret::createMultiFolds 를 활용한 모형 학습  
 
+```{r}
+set.seed(1)
+folds <- 10
+repeat_time <- 3
+CV_Idx <- createMultiFolds(train1$y, k = folds, times = repeat_time)
+#CV를 바로 할 수 있는 function을 만들고 싶지만, 각 모형들의 특징(특정 모형은 종속변수의 변환 후에 적합시켰다.)때문에
+#예측값(prediction)만 얻는것에서 만족해야 할 것 같다.
+#-> 3*10 총 30개의 모형들이 생성될텐데, 이에 따른 30 Set의 예측값이 추출될 것이다. 이들을 하나의 matrix로 병합(n*30)시킨 후에
+#apply함수를 활용해서 30개의 RMSE... 효력이 있는건가?
+#for (i in 1:repeat_time) {
+#  for (j in 1:folds) {
+#    
+#    train_idx <- CV_Idx
+#    train1.train <- train1[train_idx, ]
+#    train1.validation <- iris[-train_idx, ]
+#    
+#    f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+#    f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
+#    fit2_reg <- lm(formula = f2_reg, data = train1)
+#    fit2_cas <- lm(formula = f2_cas, data = train1)
+#    
+#  }
+#}
 
 ```
 
