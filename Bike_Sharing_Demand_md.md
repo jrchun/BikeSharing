@@ -728,6 +728,119 @@ T_model <- train1[Caret_idx, ]
 V_model <- train1[-Caret_idx, ]
 ```
 
+-&gt; set.seed()함수를 사용하여 매 시행마다 같은 데이터셋을 활용할 수 있도록 고정시킨다.
+
+**Model 2 fitting**
+
+``` r
+fit2_reg <- lm(formula = f2_reg, data = T_model)
+fit2_cas <- lm(formula = f2_cas, data = T_model)
+summary(fit2_reg)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = f2_reg, data = T_model)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.2615 -0.2971  0.0339  0.3570  2.1676 
+    ## 
+    ## Coefficients: (3 not defined because of singularities)
+    ##                        Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)           2.3838490  0.1809709  13.173  < 2e-16 ***
+    ## seasonsummer          0.6639883  0.0460977  14.404  < 2e-16 ***
+    ## seasonfall            0.6738408  0.0454331  14.832  < 2e-16 ***
+    ## seasonwinter          0.7212100  0.0326446  22.093  < 2e-16 ***
+    ## workingdayworkingday  0.0729495  0.0137337   5.312 1.11e-07 ***
+    ## weather2             -0.0410909  0.0157632  -2.607  0.00916 ** 
+    ## weather3             -0.5014494  0.0264789 -18.938  < 2e-16 ***
+    ## temp                 -0.0057656  0.0082227  -0.701  0.48321    
+    ## atemp                 0.0141229  0.0045314   3.117  0.00184 ** 
+    ## humidity             -0.0031813  0.0005252  -6.058 1.44e-09 ***
+    ## windspeed            -0.0027577  0.0008734  -3.157  0.00160 ** 
+    ## time1                -0.6400506  0.0435448 -14.699  < 2e-16 ***
+    ## time2                -1.1303038  0.0435883 -25.931  < 2e-16 ***
+    ## time3                -1.5876017  0.0438663 -36.192  < 2e-16 ***
+    ## time4                -1.8311659  0.0440375 -41.582  < 2e-16 ***
+    ## time5                -0.8119424  0.0440862 -18.417  < 2e-16 ***
+    ## time6                 0.3914356  0.0440145   8.893  < 2e-16 ***
+    ## time7                 1.3016942  0.0439705  29.604  < 2e-16 ***
+    ## time8                 2.0014989  0.0432372  46.291  < 2e-16 ***
+    ## time9                 1.5762130  0.0436660  36.097  < 2e-16 ***
+    ## time10                1.1438816  0.0438802  26.068  < 2e-16 ***
+    ## time11                1.2714419  0.0441886  28.773  < 2e-16 ***
+    ## time12                1.4830610  0.0448757  33.048  < 2e-16 ***
+    ## time13                1.4361734  0.0448322  32.034  < 2e-16 ***
+    ## time14                1.3398650  0.0450853  29.718  < 2e-16 ***
+    ## time15                1.3998238  0.0451613  30.996  < 2e-16 ***
+    ## time16                1.7236399  0.0449310  38.362  < 2e-16 ***
+    ## time17                2.1863320  0.0449402  48.650  < 2e-16 ***
+    ## time18                2.1002933  0.0445475  47.147  < 2e-16 ***
+    ## time19                1.8161482  0.0440340  41.244  < 2e-16 ***
+    ## time20                1.5081618  0.0432796  34.847  < 2e-16 ***
+    ## time21                1.2578876  0.0435987  28.852  < 2e-16 ***
+    ## time22                1.0060773  0.0436741  23.036  < 2e-16 ***
+    ## time23                0.6165345  0.0436715  14.118  < 2e-16 ***
+    ## year2012              0.5159799  0.0129798  39.752  < 2e-16 ***
+    ## month02               0.2020268  0.0315689   6.400 1.64e-10 ***
+    ## month03               0.2405865  0.0335848   7.164 8.50e-13 ***
+    ## month04              -0.2518621  0.0356096  -7.073 1.64e-12 ***
+    ## month05              -0.0131570  0.0325780  -0.404  0.68632    
+    ## month06                      NA         NA      NA       NA    
+    ## month07              -0.0963706  0.0330926  -2.912  0.00360 ** 
+    ## month08              -0.0831549  0.0323243  -2.573  0.01011 *  
+    ## month09                      NA         NA      NA       NA    
+    ## month10               0.0383520  0.0342617   1.119  0.26301    
+    ## month11               0.0222322  0.0316170   0.703  0.48197    
+    ## month12                      NA         NA      NA       NA    
+    ## discomfort            0.0064446  0.0048757   1.322  0.18627    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.593 on 8666 degrees of freedom
+    ## Multiple R-squared:  0.8213, Adjusted R-squared:  0.8204 
+    ## F-statistic: 926.1 on 43 and 8666 DF,  p-value: < 2.2e-16
+
+-&gt; month와 season계수의 직접적으로 연관되어 있으므로, NA값이 나온다. season변수를 사용하도록 한다.
+
+**Month변수 삭제 후 다시 적합**
+
+Month변수 삭제하기
+
+``` r
+data1 <- subset(data, select = -c(month))
+
+train2 <- data1[1 : nrow(train), ]
+test2 <- data1[-c(1:nrow(train)), ]
+```
+
+수정된 데이터 train2를 통해 다시 모형적합(formula도 수정)
+
+``` r
+set.seed(1)
+
+Caret_idx <- createDataPartition(train2$y, p = 0.8, list = FALSE) 
+T_model <- train2[Caret_idx, ]
+V_model <- train2[-Caret_idx, ]
+
+f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+fit2_reg <- lm(formula = f2_reg, data = T_model)
+fit2_cas <- lm(formula = f2_cas, data = T_model)
+```
+
+**모형 평가**
+
+``` r
+pred2_reg <- exp(predict(fit2_reg, newdata = V_model))-1
+pred2_cas <- exp(predict(fit2_cas, newdata = V_model))-1
+pred2_y <- pred2_reg + pred2_cas
+
+MSE_f2 <- mean((V_model$y-pred2_y)^2)
+RMSE_f2 <- sqrt(MSE_f2)
+```
+
 MSE
 ===
 
