@@ -830,7 +830,7 @@ fit2_reg <- lm(formula = f2_reg, data = T_model)
 fit2_cas <- lm(formula = f2_cas, data = T_model)
 ```
 
-**모형 평가**
+**모형2+1 평가**
 
 ``` r
 pred2_reg <- exp(predict(fit2_reg, newdata = V_model))-1
@@ -839,7 +839,38 @@ pred2_y <- pred2_reg + pred2_cas
 
 MSE_f2 <- mean((V_model$y-pred2_y)^2)
 RMSE_f2 <- sqrt(MSE_f2)
+list(MSE = MSE_f2, RMSE = RMSE_f2)
 ```
+
+    ## $MSE
+    ## [1] 8916.861
+    ## 
+    ## $RMSE
+    ## [1] 94.42913
+
+-&gt; MSE : 8916, RMSE : 94를 기록.
+
+**casual과 registered를 분할하지 않고, 바로 적합시킨 모형2(logtransform) 평가**
+
+``` r
+f2_y <- formula(log(y+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+fit2_y <- lm(formula = f2_y, data = T_model)
+pred2_real_y <- exp(predict(fit2_y, newdata = V_model))-1
+
+
+MSE_f2_real_y <- mean((V_model$y-pred2_real_y)^2)
+RMSE_f2_real_y <- sqrt(MSE_f2_real_y)
+list(MSE = MSE_f2_real_y, RMSE = RMSE_f2_real_y)
+```
+
+    ## $MSE
+    ## [1] 9269.39
+    ## 
+    ## $RMSE
+    ## [1] 96.27767
+
+-&gt; MSE : 9269, RMSE : 96을 기록.
+-&gt; 분할하여 적합시키자.
 
 MSE
 ===
