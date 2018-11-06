@@ -590,7 +590,7 @@ fit2_reg <- lm(formula = f2_reg, data = T_model)
 fit2_cas <- lm(formula = f2_cas, data = T_model)
 ```
 
-**모형2+1 평가**  
+**모형 2+1 평가**  
 
 ```{r}
 pred2_reg <- exp(predict(fit2_reg, newdata = V_model))-1
@@ -618,56 +618,58 @@ list(MSE = MSE_f2_real_y, RMSE = RMSE_f2_real_y)
 ```
 
 -> MSE : 9269, RMSE : 96을 기록.  
--> 분할하여 적합시키자.  
+-> Model2의 경우 분할하여 적합시키는게 정확하다.  
 
+**Model 3 fitting : Poisson regression**  
 
-#MSE
-pred1 <- predict(fit1, newdata = test1)
-sum((test1$count-pred1)^2) / ncol(test1)
-#RMSE
-sqrt(sum((test1$count-pred1)^2) / ncol(test1))
+```{r}
+f3_reg <- formula(registered ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+f3_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+f3_y <- formula(y ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
 
-##변수변환
-par(mfrow = c(1,1))
-hist(train1$count)
-hist(log(train1$count))
-hist(sqrt(train1$count))
-fit2 <- lm(sqrt(count) ~ datetime+season+workingday+weather+temp+atemp+humidity+windspeed+time, data = train1)
-summary(fit2)
-par(mfrow = c(2,2))
-plot(fit2)
-
-#MSE
-pred2 <- predict(fit2, newdata = test1)
-sum((test1$count-pred2)^2) / ncol(test1)
-#RMSE
-sqrt(sum((test1$count-pred2)^2) / ncol(test1))
-par(mfrow = c(1,1))
-plot(train1$count)
-
-
-###Idea1 써먹어 보기. count변수는 결국 registered와 casual의 합에 불과하다.
-# --> 그렇다면 각각의 특성이 다르므로, 2개의 모델을 만들어서 그것의 예측값의 합을 count의 합으로 둔다면?
-sum((train1$registered+train1$casual)==train1$count)
-nrow(train1)
-#합이라는 것을 확인.
-
-hist(train1$registered)
-hist(train1$casual)
-#박스콕스.......쓰고싶다...단점을 확인해봐야겠다.
-str(train1)
-
-#######지현이의 조언 : 종속변수가 이산형이니까 회귀분석을 쓰는 건 옳지않은것이 맞고, PoissonRegression을 써야된다.
-library(mpath)
-#resistered와 casual을 구분하여 추정한 뒤, 합을 구하기.
-
-Poifit1 <- glm(registered ~datetime+season+holiday+workingday+weather+temp+atemp+humidity+windspeed+time+daytime ,
-              data = train1,
-              family = poisson)
-
-Poifit2 <- glm(casual ~datetime+season+holiday+workingday+weather+temp+atemp+humidity+windspeed+time+daytime ,
-               data = train1,
+fit3_reg <- glm(formula = f3_reg ,
+               data = T_model,
                family = poisson)
+fit3_cas <- glm(formula = f3_cas ,
+               data = T_model,
+               family = poisson)
+fit3_y <- glm(formula = f3_y ,
+               data = T_model,
+               family = poisson)
+```
+
+**모형 3+1 평가**  
+
+```{r}
+pred3_reg <- predict(fit3_reg, newdata = V_model)
+pred3_cas <- predict(fit3_cas, newdata = V_model)
+pred3_y <- pred3_reg + pred3_cas
+
+MSE_f3 <- mean((V_model$y-pred3_y)^2)
+RMSE_f3 <- sqrt(MSE_f3)
+list(MSE = MSE_f3, RMSE = RMSE_f3)
+```
+
+-> MSE : 65309, RMSE : 255를 기록.  
+
+**모형 3 평가**  
+
+```{r}
+pred3_real_y <- predict(fit3_y, newdata = V_model)
+
+MSE_f3_real_y <- mean((V_model$y-pred3_real_y)^2)
+RMSE_f3_real_y <- sqrt(MSE_f3_real_y)
+list(MSE = MSE_f3_real_y, RMSE = RMSE_f3_real_y)
+```
+
+-> MSE : 66600, RMSE : 258을 기록.  
+
+**Model 4 fitting : inflated poisson regression **  
+```{r}
+#mat_f4 <- subset(T_model, select = c('season','workingday','weather','temp','atemp','humidity',
+#                                                        'windspeed','time','year','discomfort'))
+#fit4_reg <- zip.mod(T_model$y, mat_f4)
+```
 
 
 
@@ -686,42 +688,6 @@ str(sampleSubmission)
 
 mean(train1$count)
 var(train1$count)
-
-
-##모델이 합리적인지 확인해보고 싶을땐? k-fold Cross validation을 사용하는 것이 옳은 것 같다.
-##
-##Cross Validation
-library(caret)
-
-set.seed(123)
-train1_fold <- createFolds(train1$count, k = 10)
-form <- formula(count ~ datetime + season + holiday + workingday + weather + 
-                  temp + atemp + humidity + windspeed + time)
-
-cv_results <- lapply(train1_fold, function(x) {
-  count_train <- train1[-x, ]
-  count_test <- train1[x, ]
-  count_model <- glm(formula = form,
-                     data = count_train,
-                     family = poisson)
-  credit_pred <- exp(predict(count_model, newdata = count_test))
-  credit_actual <- count_test$count
-  MSE <- sum((credit_actual - credit_pred)^2) / nrow(credit_actual)
-  return(MSE)
-})
-
-#weather의 변수를 보자
-table(data.all$weather)
-which(data.all$weather == 4)
-invaliddata <- which(data.all$weather == 4)
-#3개의 데이터
-data.all <- data.all[-invaliddata, ]
-#삭제
-str(cv_results)
-mean(unlist(cv_results))
-
-train1 <- data.all[1:nrow(train)-1, ]
-test1 <- data.all[10886:nrow(data.all), ]
 
 
 
