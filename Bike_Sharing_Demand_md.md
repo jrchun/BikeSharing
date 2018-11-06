@@ -716,12 +716,16 @@ plot(fit1_cas)
 
 **Return to Data partition**
 
-caret::createDataPartition 를 활용한 모형 학습
+Train data를 T\_model과 V\_model data로 분할하여 각 모형을 평가하기로 한다.
+
+caret::createDataPartition을 활용한 data partition
 
 ``` r
 set.seed(1)
-#trainingRows<-createDataPartition(DT$variable, p=0.75, list=FALSE)
-#head(trainingRows) # view the samples of row numbers
+
+Caret_idx <- createDataPartition(train1$y, p = 0.8, list = FALSE) 
+T_model <- train1[Caret_idx, ]
+V_model <- train1[-Caret_idx, ]
 ```
 
 MSE
