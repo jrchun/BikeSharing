@@ -95,6 +95,17 @@ library(caret)    #for cross validation
     ## Loading required package: lattice
 
 ``` r
+library(pscl)     #for Zero-inflated poisson regression
+```
+
+    ## Classes and Methods for R developed in the
+    ## Political Science Computational Laboratory
+    ## Department of Political Science
+    ## Stanford University
+    ## Simon Jackman
+    ## hurdle and zeroinfl functions by Achim Zeileis
+
+``` r
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -934,19 +945,112 @@ list(MSE = MSE_f3_real_y, RMSE = RMSE_f3_real_y)
 #mat_f4 <- subset(T_model, select = c('season','workingday','weather','temp','atemp','humidity',
 #                                                        'windspeed','time','year','discomfort'))
 #fit4_reg <- zip.mod(T_model$y, mat_f4)
+fit4_reg <- zeroinfl(registered ~ 
+                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
+                     data = T_model)
+fit4_cas <- zeroinfl(casual ~ 
+                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
+                     data = T_model)
+#fit4_real_y <- zeroinfl(y ~ 
+#                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
+#                     data = T_model)
 ```
 
-제출파일 만들기
-===============
+**모형 4+1 평가**
 
-pre1 &lt;- predict(Poifit1, newdata = test1) pre2 &lt;- predict(Poifit2, newdata = test1) exppre1 &lt;- exp(pre1) exppre2 &lt;- exp(pre2) final &lt;- exppre1+exppre2 sampleSubmission &lt;- read.csv('sampleSubmission.csv', header = T) sampleSubmission$count &lt;- final write.csv(sampleSubmission, file = 'smapleSubmission5.csv') str(sampleSubmission)
+``` r
+pred4_reg <- predict(fit4_reg, newdata = V_model)
+pred4_cas <- predict(fit4_cas, newdata = V_model)
+pred4_y <- pred4_reg + pred4_cas
 
-과대산포를 의심할 수 있을 것 같다.
-==================================
+MSE_f4 <- mean((V_model$y-pred4_y)^2)
+RMSE_f4 <- sqrt(MSE_f4)
+list(MSE = MSE_f4, RMSE = RMSE_f4)
+```
 
-mean(train1*c**o**u**n**t*)*v**a**r*(*t**r**a**i**n*1count)
+    ## $MSE
+    ## [1] 7081.541
+    ## 
+    ## $RMSE
+    ## [1] 84.15189
 
-제출파일 만들기
-===============
+-&gt; MSE : 7081, RMSE : 84를 기록.
 
-pre &lt;- predict(Poifit, newdata = test1) exppre &lt;- exp(pre) sampleSubmission &lt;- read.csv('sampleSubmission.csv', header = T) sampleSubmission$count &lt;- exppre write.csv(sampleSubmission, file = 'smapleSubmission2.csv') str(sampleSubmission)
+**Model 4+2 : y값은 0이 존재하지 않으며, zero-inflated는 casual에서만 존재함.**
+
+``` r
+fit4_2_reg <- glm(casual ~ season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort,
+               data = T_model,
+               family = poisson)
+fit4_cas <- zeroinfl(casual ~ 
+                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
+                     data = T_model)
+```
+
+-&gt; table함수로 각 변수들의 min을 확인해 보면, casual에서 0이 압도적으로 많은 것을 확인할 수 있다.
+
+**모형 4+2 평가**
+
+``` r
+pred4_2_reg <- predict(fit4_2_reg, newdata = V_model)
+pred4_cas <- predict(fit4_cas, newdata = V_model)
+pred4_2_y <- pred4_2_reg + pred4_cas
+
+MSE_f4_2 <- mean((V_model$y-pred4_2_y)^2)
+RMSE_f4_2 <- sqrt(MSE_f4_2)
+list(MSE = MSE_f4_2, RMSE = RMSE_f4_2)
+```
+
+    ## $MSE
+    ## [1] 47351.47
+    ## 
+    ## $RMSE
+    ## [1] 217.6039
+
+-&gt; MSE : 47351, RMSE : 217을 기록.
+
+**최종모형 적합**
+
+평가결과 모형 4+1이 가장 우수한 것을 확인했으므로, 이를 학습데이터(train2)에 적용하여 최종파일을 생성하도록 한다.
+**Final model\_1 fitting**
+
+``` r
+fit_reg <- zeroinfl(registered ~ 
+                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
+                     data = train2)
+fit_cas <- zeroinfl(casual ~ 
+                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
+                     data = train2)
+pred_reg <- predict(fit_reg, newdata = test2)
+pred_cas <- predict(fit_cas, newdata = test2)
+pred_y <- pred_reg + pred_cas
+```
+
+**Make sampleSubmission file with model 4+1**
+
+``` r
+sampleSubmission <- read.csv('sampleSubmission.csv', header = T)
+sampleSubmission$count <- pred_y
+write.csv(sampleSubmission, file = 'smapleSubmission_github.csv', row.names = FALSE)
+```
+
+**Final model\_2 fitting**
+
+``` r
+f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
+fit_reg_2 <- lm(formula = f2_reg, data = train2)
+fit_cas_2 <- lm(formula = f2_cas, data = train2)
+
+pred_reg_2 <- exp(predict(fit_reg_2, newdata = test2))-1
+pred_cas_2 <- exp(predict(fit_cas_2, newdata = test2))-1
+pred_y_2 <- pred_reg_2 + pred_cas_2
+```
+
+**Make sampleSubmission file with model 2+1**
+
+``` r
+sampleSubmission_2 <- read.csv('sampleSubmission.csv', header = T)
+sampleSubmission_2$count <- pred_y_2
+write.csv(sampleSubmission_2, file = 'smapleSubmission_github_2.csv', row.names = FALSE)
+```
