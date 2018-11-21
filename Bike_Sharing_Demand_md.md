@@ -1054,3 +1054,9 @@ sampleSubmission_2 <- read.csv('sampleSubmission.csv', header = T)
 sampleSubmission_2$count <- pred_y_2
 write.csv(sampleSubmission_2, file = 'smapleSubmission_github_2.csv', row.names = FALSE)
 ```
+
+------------------------------------------------------------------------
+
+**한계점**
+현재 점수는 WindSpeed(풍속) 변수의 0값이 많은 것을 적절한 값으로 채우지 못한 결과이다.
+즉 EDA과정에서 누락된 부분이 존재하므로, 추후에 수정과정을 통하여 더 나은 결과를 얻어야 할 것이다.
