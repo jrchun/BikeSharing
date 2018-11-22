@@ -467,6 +467,23 @@ cor(num_data_2)
 
 **windspeed**  
 
+
+Histogram  
+
+```{r}
+ggplot(data = data, aes(data$windspeed))+
+     geom_histogram()
+```
+
+-> 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),  
+이를 대체할 방법을 찾는다.  
+
+결측값(0)을 평균값으로 대치  
+```{r}
+data[which(data$windspeed == 0), "windspeed"] <- median(data[which(data$windspeed != 0), "windspeed"])
+```
+
+
 Boxplot을 통한 풍속과 날씨의 연관성 확인   
 
 

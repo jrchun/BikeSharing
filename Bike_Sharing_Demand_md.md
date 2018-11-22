@@ -631,6 +631,26 @@ cor(num_data_2)
 
 **windspeed**
 
+Histogram
+
+``` r
+ggplot(data = data, aes(data$windspeed))+
+     geom_histogram()
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
+
+-&gt; 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),
+이를 대체할 방법을 찾는다.
+
+결측값(0)을 평균값으로 대치
+
+``` r
+data[which(data$windspeed == 0), "windspeed"] <- median(data[which(data$windspeed != 0), "windspeed"])
+```
+
 Boxplot을 통한 풍속과 날씨의 연관성 확인
 
 ``` r
@@ -641,7 +661,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -688,13 +708,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-33-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-33-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-2.png)
 
 -&gt; 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.
 
@@ -715,13 +735,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-2.png)
 
 -&gt; 변환 전에 비해, 나아진 모습을 보인다.
 
@@ -755,63 +775,63 @@ summary(fit2_reg)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -3.2615 -0.2971  0.0339  0.3570  2.1676 
+    ## -3.2666 -0.2974  0.0331  0.3584  2.1986 
     ## 
     ## Coefficients: (3 not defined because of singularities)
     ##                        Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)           2.3838490  0.1809709  13.173  < 2e-16 ***
-    ## seasonsummer          0.6639883  0.0460977  14.404  < 2e-16 ***
-    ## seasonfall            0.6738408  0.0454331  14.832  < 2e-16 ***
-    ## seasonwinter          0.7212100  0.0326446  22.093  < 2e-16 ***
-    ## workingdayworkingday  0.0729495  0.0137337   5.312 1.11e-07 ***
-    ## weather2             -0.0410909  0.0157632  -2.607  0.00916 ** 
-    ## weather3             -0.5014494  0.0264789 -18.938  < 2e-16 ***
-    ## temp                 -0.0057656  0.0082227  -0.701  0.48321    
-    ## atemp                 0.0141229  0.0045314   3.117  0.00184 ** 
-    ## humidity             -0.0031813  0.0005252  -6.058 1.44e-09 ***
-    ## windspeed            -0.0027577  0.0008734  -3.157  0.00160 ** 
-    ## time1                -0.6400506  0.0435448 -14.699  < 2e-16 ***
-    ## time2                -1.1303038  0.0435883 -25.931  < 2e-16 ***
-    ## time3                -1.5876017  0.0438663 -36.192  < 2e-16 ***
-    ## time4                -1.8311659  0.0440375 -41.582  < 2e-16 ***
-    ## time5                -0.8119424  0.0440862 -18.417  < 2e-16 ***
-    ## time6                 0.3914356  0.0440145   8.893  < 2e-16 ***
-    ## time7                 1.3016942  0.0439705  29.604  < 2e-16 ***
-    ## time8                 2.0014989  0.0432372  46.291  < 2e-16 ***
-    ## time9                 1.5762130  0.0436660  36.097  < 2e-16 ***
-    ## time10                1.1438816  0.0438802  26.068  < 2e-16 ***
-    ## time11                1.2714419  0.0441886  28.773  < 2e-16 ***
-    ## time12                1.4830610  0.0448757  33.048  < 2e-16 ***
-    ## time13                1.4361734  0.0448322  32.034  < 2e-16 ***
-    ## time14                1.3398650  0.0450853  29.718  < 2e-16 ***
-    ## time15                1.3998238  0.0451613  30.996  < 2e-16 ***
-    ## time16                1.7236399  0.0449310  38.362  < 2e-16 ***
-    ## time17                2.1863320  0.0449402  48.650  < 2e-16 ***
-    ## time18                2.1002933  0.0445475  47.147  < 2e-16 ***
-    ## time19                1.8161482  0.0440340  41.244  < 2e-16 ***
-    ## time20                1.5081618  0.0432796  34.847  < 2e-16 ***
-    ## time21                1.2578876  0.0435987  28.852  < 2e-16 ***
-    ## time22                1.0060773  0.0436741  23.036  < 2e-16 ***
-    ## time23                0.6165345  0.0436715  14.118  < 2e-16 ***
-    ## year2012              0.5159799  0.0129798  39.752  < 2e-16 ***
-    ## month02               0.2020268  0.0315689   6.400 1.64e-10 ***
-    ## month03               0.2405865  0.0335848   7.164 8.50e-13 ***
-    ## month04              -0.2518621  0.0356096  -7.073 1.64e-12 ***
-    ## month05              -0.0131570  0.0325780  -0.404  0.68632    
+    ## (Intercept)           2.4113637  0.1807965  13.337  < 2e-16 ***
+    ## seasonsummer          0.6583798  0.0461051  14.280  < 2e-16 ***
+    ## seasonfall            0.6705702  0.0453912  14.773  < 2e-16 ***
+    ## seasonwinter          0.7211512  0.0326119  22.113  < 2e-16 ***
+    ## workingdayworkingday  0.0734889  0.0137258   5.354 8.82e-08 ***
+    ## weather2             -0.0420729  0.0157459  -2.672  0.00755 ** 
+    ## weather3             -0.4996040  0.0264165 -18.913  < 2e-16 ***
+    ## temp                 -0.0056989  0.0082154  -0.694  0.48790    
+    ## atemp                 0.0139556  0.0044812   3.114  0.00185 ** 
+    ## humidity             -0.0032892  0.0005227  -6.293 3.27e-10 ***
+    ## windspeed            -0.0045350  0.0010473  -4.330 1.51e-05 ***
+    ## time1                -0.6394294  0.0435233 -14.692  < 2e-16 ***
+    ## time2                -1.1281100  0.0435680 -25.893  < 2e-16 ***
+    ## time3                -1.5861797  0.0438466 -36.176  < 2e-16 ***
+    ## time4                -1.8303183  0.0440143 -41.585  < 2e-16 ***
+    ## time5                -0.8115976  0.0440640 -18.419  < 2e-16 ***
+    ## time6                 0.3910177  0.0439889   8.889  < 2e-16 ***
+    ## time7                 1.3015464  0.0439445  29.618  < 2e-16 ***
+    ## time8                 2.0029375  0.0432163  46.347  < 2e-16 ***
+    ## time9                 1.5785744  0.0436448  36.169  < 2e-16 ***
+    ## time10                1.1448174  0.0438495  26.108  < 2e-16 ***
+    ## time11                1.2721585  0.0441549  28.811  < 2e-16 ***
+    ## time12                1.4862376  0.0448638  33.128  < 2e-16 ***
+    ## time13                1.4385693  0.0448060  32.107  < 2e-16 ***
+    ## time14                1.3413498  0.0450493  29.775  < 2e-16 ***
+    ## time15                1.4024733  0.0451342  31.073  < 2e-16 ***
+    ## time16                1.7256639  0.0448924  38.440  < 2e-16 ***
+    ## time17                2.1887105  0.0449114  48.734  < 2e-16 ***
+    ## time18                2.0998837  0.0444958  47.193  < 2e-16 ***
+    ## time19                1.8152646  0.0439928  41.263  < 2e-16 ***
+    ## time20                1.5067164  0.0432429  34.843  < 2e-16 ***
+    ## time21                1.2573778  0.0435754  28.855  < 2e-16 ***
+    ## time22                1.0058818  0.0436484  23.045  < 2e-16 ***
+    ## time23                0.6151632  0.0436487  14.094  < 2e-16 ***
+    ## year2012              0.5142700  0.0129859  39.602  < 2e-16 ***
+    ## month02               0.2038628  0.0315528   6.461 1.10e-10 ***
+    ## month03               0.2407071  0.0335666   7.171 8.05e-13 ***
+    ## month04              -0.2459099  0.0356215  -6.903 5.43e-12 ***
+    ## month05              -0.0104444  0.0325725  -0.321  0.74848    
     ## month06                      NA         NA      NA       NA    
-    ## month07              -0.0963706  0.0330926  -2.912  0.00360 ** 
-    ## month08              -0.0831549  0.0323243  -2.573  0.01011 *  
+    ## month07              -0.1000376  0.0330988  -3.022  0.00252 ** 
+    ## month08              -0.0848620  0.0323119  -2.626  0.00865 ** 
     ## month09                      NA         NA      NA       NA    
-    ## month10               0.0383520  0.0342617   1.119  0.26301    
-    ## month11               0.0222322  0.0316170   0.703  0.48197    
+    ## month10               0.0380569  0.0342358   1.112  0.26634    
+    ## month11               0.0210005  0.0315914   0.665  0.50623    
     ## month12                      NA         NA      NA       NA    
-    ## discomfort            0.0064446  0.0048757   1.322  0.18627    
+    ## discomfort            0.0066471  0.0048580   1.368  0.17126    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.593 on 8666 degrees of freedom
-    ## Multiple R-squared:  0.8213, Adjusted R-squared:  0.8204 
-    ## F-statistic: 926.1 on 43 and 8666 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.5927 on 8666 degrees of freedom
+    ## Multiple R-squared:  0.8215, Adjusted R-squared:  0.8206 
+    ## F-statistic: 927.2 on 43 and 8666 DF,  p-value: < 2.2e-16
 
 -&gt; month와 season계수의 직접적으로 연관되어 있으므로, NA값이 나온다. season변수를 사용하도록 한다.
 
@@ -854,10 +874,10 @@ list(MSE = MSE_f2, RMSE = RMSE_f2)
 ```
 
     ## $MSE
-    ## [1] 8916.861
+    ## [1] 8902.436
     ## 
     ## $RMSE
-    ## [1] 94.42913
+    ## [1] 94.35272
 
 -&gt; MSE : 8916, RMSE : 94를 기록.
 
@@ -875,10 +895,10 @@ list(MSE = MSE_f2_real_y, RMSE = RMSE_f2_real_y)
 ```
 
     ## $MSE
-    ## [1] 9269.39
+    ## [1] 9260.605
     ## 
     ## $RMSE
-    ## [1] 96.27767
+    ## [1] 96.23204
 
 -&gt; MSE : 9269, RMSE : 96을 기록.
 -&gt; Model2의 경우 분할하여 적합시키는게 정확하다.
@@ -914,10 +934,10 @@ list(MSE = MSE_f3, RMSE = RMSE_f3)
 ```
 
     ## $MSE
-    ## [1] 65309.28
+    ## [1] 65309.2
     ## 
     ## $RMSE
-    ## [1] 255.5568
+    ## [1] 255.5567
 
 -&gt; MSE : 65309, RMSE : 255를 기록.
 
@@ -932,7 +952,7 @@ list(MSE = MSE_f3_real_y, RMSE = RMSE_f3_real_y)
 ```
 
     ## $MSE
-    ## [1] 66600.8
+    ## [1] 66600.78
     ## 
     ## $RMSE
     ## [1] 258.0713
@@ -969,10 +989,10 @@ list(MSE = MSE_f4, RMSE = RMSE_f4)
 ```
 
     ## $MSE
-    ## [1] 7081.541
+    ## [1] 7072.963
     ## 
     ## $RMSE
-    ## [1] 84.15189
+    ## [1] 84.10091
 
 -&gt; MSE : 7081, RMSE : 84를 기록.
 
@@ -1002,10 +1022,10 @@ list(MSE = MSE_f4_2, RMSE = RMSE_f4_2)
 ```
 
     ## $MSE
-    ## [1] 47351.47
+    ## [1] 47346.34
     ## 
     ## $RMSE
-    ## [1] 217.6039
+    ## [1] 217.5921
 
 -&gt; MSE : 47351, RMSE : 217을 기록.
 
