@@ -209,19 +209,22 @@ str(data)
     ##  $ registered: int  13 32 27 10 1 1 0 2 7 6 ...
     ##  $ y         : int  16 40 32 13 1 1 2 3 8 14 ...
 
+``` r
+colSums(is.na(data))
+```
+
+    ##   datetime     season    holiday workingday    weather       temp 
+    ##          0          0          0          0          0          0 
+    ##      atemp   humidity  windspeed     casual registered          y 
+    ##          0          0          0       6493       6493       6493
+
 **datetime**
 
 ``` r
-nrow(data)
+nrow(data) == length(unique(data$datetime))
 ```
 
-    ## [1] 17379
-
-``` r
-length(table(data$datetime))
-```
-
-    ## [1] 17379
+    ## [1] TRUE
 
 -&gt; 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.
 
@@ -234,7 +237,7 @@ ggplot(data = data, aes(x = datetime, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 -&gt; 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.
 
@@ -271,12 +274,12 @@ levels(data$season)
 boxplot(data$y ~ data$season)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 **B. ggplot을 활용한 그림**
 
 ``` r
-ggplot(data = train) +
+ggplot(data = data) +
   geom_boxplot(aes(x = factor(season), y = y) ,fill = c('coral', 'coral1', 'coral2', 'coral3')) +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by Season' ,
@@ -284,9 +287,11 @@ ggplot(data = train) +
   scale_x_discrete(labels = levels(data$season))
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-8-1.png)
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
--&gt; 계절에 따라 y(count)의 값이 크게 변동은 없으나, summer와 fall의 평균이 어느정도 높은것을 확인할 수 있다.
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
+
+-&gt; 계절에 따라 y(count)의 값이 크게 변동은 없는 것을 확인할 수 있다.
 
 **holiday**
 
@@ -309,17 +314,19 @@ table(data$holiday)
 
 -&gt; Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.
 
--&gt; count에 영향을 주지 않는다.
-
 ``` r
-ggplot(data = train, aes(x = holiday, y = y)) +
-  geom_boxplot(aes(group = holiday)) +
+ggplot(data = data) +
+  geom_boxplot(aes(x = factor(holiday), y = y, group = holiday)) +
   aes(fill = holiday) +
   labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by holiday')
+       subtitle = 'Grouped by holiday',
+       x = 'Holiday') +
+    scale_x_discrete(labels = levels(data$holiday))
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-10-1.png)
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 -&gt; Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
@@ -341,14 +348,18 @@ table(data$workingday)
 차이점 확인하기.
 
 ``` r
-ggplot(data = train, aes(x = workingday, y = y)) +
-  geom_boxplot(aes(group = workingday)) +
+ggplot(data = data) +
+  geom_boxplot(aes(x = factor(workingday), y = y, group = workingday)) +
   aes(fill = workingday) +
   labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by working')
+       subtitle = 'Grouped by workingday',
+       x = 'workingday') +
+    scale_x_discrete(labels = levels(data$workingday))
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-12-1.png)
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-13-1.png)
 
 -&gt; 평균의 차이가 크지 않은 것을 확인할 수 있다.
 
@@ -357,6 +368,7 @@ ggplot(data = train, aes(x = workingday, y = y)) +
 범주별 데이터 수 확인
 
 ``` r
+data$weather <- as.factor(data$weather)
 table(data$weather)
 ```
 
@@ -369,16 +381,16 @@ table(data$weather)
 차이점 확인
 
 ``` r
-ggplot(data = data, aes(x = weather, y = y))+
-     geom_boxplot(aes(group = weather)) +
-     aes(fill = weather) +
-     labs(title = 'Boxplot of Data' ,
-     subtitle = 'Grouped by weather')
+ggplot(data = train) +
+  geom_boxplot(aes(x = factor(weather), y = y, group = weather)) +
+  aes(fill = weather) +
+  labs(title = 'Boxplot of Data' ,
+       subtitle = 'Grouped by weather',
+       x = 'weather') +
+    scale_x_discrete(labels = levels(data$weather))
 ```
 
-    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 -&gt; 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.
 
@@ -422,26 +434,31 @@ cor(num_train)[,5]
 corrplot(cor(num_train), method = 'circle', diag = FALSE)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-17-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 -&gt; 상관관계들을 확인할 수 있다.
 
 **Checking Y**
 
 ``` r
-ggplot(data = data, aes(data$y))+
+ggplot(data = train, aes(train$y))+
      geom_histogram()
 ```
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
 -&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
 
 -&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
+
+#### EDA 정리
+
+| 변수명  | 정리방법 |
+|---------|----------|
+| Season  | sdf      |
+| Holiday | sdf      |
 
 ------------------------------------------------------------------------
 
@@ -468,7 +485,7 @@ ggplot(data = data, aes(x = time, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
@@ -525,7 +542,7 @@ ggplot(data = data, aes(x = daytime, y = y)) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -577,12 +594,15 @@ list(Index = which(data$weather == 4),
     ## 
     ## $Previous_day
     ## [1] 3 3 3
+    ## Levels: 1 2 3 4
     ## 
     ## $Level4_day
     ## [1] 4 4 4
+    ## Levels: 1 2 3 4
     ## 
     ## $Next_day
     ## [1] 3 3 3
+    ## Levels: 1 2 3 4
 
 -&gt; 3개의 데이터 모두 전후일에 날씨변수가 3이었다. 이에 따라서 모든 범주 4를 범주 3으로 치환한다.
 
@@ -640,7 +660,7 @@ ggplot(data = data, aes(data$windspeed))+
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
 
 -&gt; 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),
 이를 대체할 방법을 찾는다.
@@ -661,7 +681,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-32-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -708,13 +728,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-2.png)
 
 -&gt; 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.
 
@@ -735,13 +755,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-38-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-38-2.png)
 
 -&gt; 변환 전에 비해, 나아진 모습을 보인다.
 

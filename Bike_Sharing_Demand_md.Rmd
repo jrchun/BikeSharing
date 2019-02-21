@@ -139,12 +139,15 @@ test <- rename(test, 'y' = 'count')
 data <- rbind(train, test)
 str(data)
 ```  
-
+  
+  
+```{r}
+colSums(is.na(data))
+```
 **datetime**
 
 ```{r}
-nrow(data)
-length(table(data$datetime))
+nrow(data) == length(unique(data$datetime))
 ```
 
 -> 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다. 
@@ -185,7 +188,7 @@ boxplot(data$y ~ data$season)
 **B. ggplot을 활용한 그림**
 
 ```{r}
-ggplot(data = train) +
+ggplot(data = data) +
   geom_boxplot(aes(x = factor(season), y = y) ,fill = c('coral', 'coral1', 'coral2', 'coral3')) +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by Season' ,
@@ -193,7 +196,7 @@ ggplot(data = train) +
   scale_x_discrete(labels = levels(data$season))
 ```
 
- -> 계절에 따라 y(count)의 값이 크게 변동은 없으나, summer와 fall의 평균이 어느정도 높은것을 확인할 수 있다.
+ -> 계절에 따라 y(count)의 값이 크게 변동은 없는 것을 확인할 수 있다.
 
 **holiday**
 
@@ -207,16 +210,17 @@ table(data$holiday)
 
 -> Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.  
 
--> count에 영향을 주지 않는다.
 
 ```{r}
-ggplot(data = train, aes(x = holiday, y = y)) +
-  geom_boxplot(aes(group = holiday)) +
+ggplot(data = data) +
+  geom_boxplot(aes(x = factor(holiday), y = y, group = holiday)) +
   aes(fill = holiday) +
   labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by holiday')
-```
+       subtitle = 'Grouped by holiday',
+       x = 'Holiday') +
+    scale_x_discrete(labels = levels(data$holiday))
 
+```
 
 -> Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 
 Holiday에 상대적으로 많은 것을 확인할 수 있다.  
@@ -234,11 +238,13 @@ table(data$workingday)
 차이점 확인하기.  
   
 ```{r}
-ggplot(data = train, aes(x = workingday, y = y)) +
-  geom_boxplot(aes(group = workingday)) +
+ggplot(data = data) +
+  geom_boxplot(aes(x = factor(workingday), y = y, group = workingday)) +
   aes(fill = workingday) +
   labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by working')
+       subtitle = 'Grouped by workingday',
+       x = 'workingday') +
+    scale_x_discrete(labels = levels(data$workingday))
 ```  
   
 -> 평균의 차이가 크지 않은 것을 확인할 수 있다.  
@@ -248,6 +254,7 @@ ggplot(data = train, aes(x = workingday, y = y)) +
 범주별 데이터 수 확인  
 
 ```{r}
+data$weather <- as.factor(data$weather)
 table(data$weather)
 ```
 -> 4(Heavy Rain)인 자료가 단 3개밖에 존재하지 않는다.  
@@ -255,11 +262,15 @@ table(data$weather)
 차이점 확인
 
 ```{r}
-ggplot(data = data, aes(x = weather, y = y))+
-     geom_boxplot(aes(group = weather)) +
-     aes(fill = weather) +
-     labs(title = 'Boxplot of Data' ,
-     subtitle = 'Grouped by weather')
+
+ggplot(data = train) +
+  geom_boxplot(aes(x = factor(weather), y = y, group = weather)) +
+  aes(fill = weather) +
+  labs(title = 'Boxplot of Data' ,
+       subtitle = 'Grouped by weather',
+       x = 'weather') +
+    scale_x_discrete(labels = levels(data$weather))
+
 ```
 
 -> 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.  
@@ -301,13 +312,20 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 **Checking Y**
 
 ```{r}
-ggplot(data = data, aes(data$y))+
+ggplot(data = train, aes(train$y))+
      geom_histogram()
 ```
 
 -> 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.  
 
 -> 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.  
+
+
+#### EDA 정리
+|변수명 | 정리방법|
+|-------|---------|
+|Season |sdf| 
+|Holiday|sdf|
 
 ---
 
