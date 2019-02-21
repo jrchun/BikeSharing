@@ -154,7 +154,19 @@ nrow(data) == length(unique(data$datetime))
 -> 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다. 
 
 ```{r}
-ggplot(data = data, aes(x = datetime, y = y)) +
+A <- ggplot(data = train, aes(x = datetime, y = casual, color = factor(workingday))) +
+    geom_point() +
+    labs(title = 'Scatter plot of data',
+        subtitle = 'with datetime(casual)')
+B <- ggplot(data = train, aes(x = datetime, y = registered, color = factor(workingday))) +
+    geom_point() +
+    labs(title = 'Scatter plot of data',
+        subtitle = 'with datetime(registered)')
+grid.arrange(A, B, nrow = 2)
+```
+
+```{r}
+ggplot(data = data, aes(x = datetime, y = y, color = workingday)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
        subtitle = 'with datetime')
@@ -359,6 +371,10 @@ ggplot(data = train, aes(train$y))+
 
 **datetime**  
 
+
+
+
+
 - 연월일 / 시간 -> 월별로 계절을 나누는게 어느정도 정확하지 않을까?  
 - 시간대별로 다른 대여수? 버리고 싶지만, 시간대별로 온도가 너무 다르다.  
 
@@ -379,6 +395,22 @@ ggplot(data = data, aes(x = time, y = y)) +
 
 
  -> 일정한 추세를 보이는 것을 확인할 수 있었다.  
+ 
+```{r}
+
+same_time_idx <- which(data$time == 6)
+same_time_data <- data[same_time_idx, ]
+A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = workingday)) +
+  geom_point() +
+  labs(title = 'Scatter plot of data',
+       subtitle = 'with sametime')
+B1 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
+  geom_point() +
+  labs(title = 'Scatter plot of data',
+       subtitle = 'with sametime')
+grid.arrange(A1, B1, nrow = 2)
+```
+ 
  
 
 **날짜로 시간대 나누기**  
