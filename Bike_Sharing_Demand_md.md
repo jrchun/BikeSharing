@@ -106,6 +106,19 @@ library(pscl)     #for Zero-inflated poisson regression
     ## hurdle and zeroinfl functions by Achim Zeileis
 
 ``` r
+library(gridExtra)
+```
+
+    ## Warning: package 'gridExtra' was built under R version 3.5.2
+
+    ## 
+    ## Attaching package: 'gridExtra'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     combine
+
+``` r
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -438,6 +451,28 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 
 -&gt; 상관관계들을 확인할 수 있다.
 
+**각 연속형 변수들의 히스토그램**
+
+``` r
+temp_hist <- ggplot(data = num_data, aes(num_data$temp))+ geom_histogram() + labs(x = 'temp')
+atemp_hist <- ggplot(data = num_data, aes(num_data$atemp))+ geom_histogram() + labs(x = 'atemp')
+humidity_hist <- ggplot(data = num_data, aes(num_data$humidity))+ geom_histogram() + labs(x = 'humidity')
+windspeed_hist <- ggplot(data = num_data, aes(num_data$windspeed))+ geom_histogram() + labs(x = 'windspeed')
+
+grid.arrange(temp_hist, atemp_hist, humidity_hist, windspeed_hist, ncol=2, nrow = 2)
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
+
+-&gt; 알 수 있는 사실
+- humidity에서 100으로 관측된 값들을 세부적으로 봐야 한다.
+- windspeed에서 0으로 관측된 값들(NA로 추청)이 보인다.
+
 **Checking Y**
 
 ``` r
@@ -447,7 +482,7 @@ ggplot(data = train, aes(train$y))+
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
 -&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
 
@@ -455,10 +490,17 @@ ggplot(data = train, aes(train$y))+
 
 #### EDA 정리
 
-| 변수명  | 정리방법 |
-|---------|----------|
-| Season  | sdf      |
-| Holiday | sdf      |
+| 변수명     | 특징                                                                        | 전처리 방법                  |
+|------------|-----------------------------------------------------------------------------|------------------------------|
+| Datetime   | 각 월의 20일 이후의 정보를 예측해야하며, 시계열성을 확인했다.               | Lag변수를 만든다.            |
+| Season     | 종속변수와의 큰 연관성을 찾을 수 없었다.                                    |                              |
+| Holiday    | 두 범주값의 비율이 매우 비대칭이며, 종속변수와의 큰 연관성은 보이지 않는다. |                              |
+| Workingday | 종속변수와의 큰 연관성을 찾을 수 없었다.                                    |                              |
+| Weather    | 범주 4의 수가 3개로, 매우 적은 관측치를 보였다.                             | 유사한 다른 값으로 치환한다. |
+| Temp       |                                                                             |                              |
+| Atemp      |                                                                             |                              |
+| Humidity   |                                                                             |                              |
+| Windspeed  |                                                                             |                              |
 
 ------------------------------------------------------------------------
 
@@ -485,7 +527,7 @@ ggplot(data = data, aes(x = time, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
@@ -542,7 +584,7 @@ ggplot(data = data, aes(x = daytime, y = y)) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-23-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -660,7 +702,7 @@ ggplot(data = data, aes(data$windspeed))+
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-31-1.png)
 
 -&gt; 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),
 이를 대체할 방법을 찾는다.
@@ -681,7 +723,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-32-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-33-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -728,13 +770,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-36-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-2.png)
 
 -&gt; 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.
 
@@ -755,13 +797,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-38-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-39-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-38-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-39-2.png)
 
 -&gt; 변환 전에 비해, 나아진 모습을 보인다.
 

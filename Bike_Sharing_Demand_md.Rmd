@@ -83,6 +83,7 @@ library(corrplot) #for correlation plot
 library(dplyr)    #for %in% function
 library(caret)    #for cross validation
 library(pscl)     #for Zero-inflated poisson regression
+library(gridExtra)
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -309,6 +310,23 @@ corrplot(cor(num_train), method = 'circle', diag = FALSE)
 
 -> 상관관계들을 확인할 수 있다.  
 
+**각 연속형 변수들의 히스토그램**  
+
+```{r}
+temp_hist <- ggplot(data = num_data, aes(num_data$temp))+ geom_histogram() + labs(x = 'temp')
+atemp_hist <- ggplot(data = num_data, aes(num_data$atemp))+ geom_histogram() + labs(x = 'atemp')
+humidity_hist <- ggplot(data = num_data, aes(num_data$humidity))+ geom_histogram() + labs(x = 'humidity')
+windspeed_hist <- ggplot(data = num_data, aes(num_data$windspeed))+ geom_histogram() + labs(x = 'windspeed')
+
+grid.arrange(temp_hist, atemp_hist, humidity_hist, windspeed_hist, ncol=2, nrow = 2)
+```
+  
+-> 알 수 있는 사실  
+- humidity에서 100으로 관측된 값들을 세부적으로 봐야 한다.  
+- windspeed에서 0으로 관측된 값들(NA로 추청)이 보인다.
+
+
+
 **Checking Y**
 
 ```{r}
@@ -322,10 +340,17 @@ ggplot(data = train, aes(train$y))+
 
 
 #### EDA 정리
-|변수명 | 정리방법|
-|-------|---------|
-|Season |sdf| 
-|Holiday|sdf|
+| 변수명 | 특징 | 전처리 방법 |
+|-------|------|-------------|
+| Datetime | 각 월의 20일 이후의 정보를 예측해야하며, 시계열성을 확인했다.| Lag변수를 만든다. |
+| Season | 종속변수와의 큰 연관성을 찾을 수 없었다.  | |
+| Holiday | 두 범주값의 비율이 매우 비대칭이며, 종속변수와의 큰 연관성은 보이지 않는다. | |
+| Workingday | 종속변수와의 큰 연관성을 찾을 수 없었다. | |
+| Weather | 범주 4의 수가 3개로, 매우 적은 관측치를 보였다. | 유사한 다른 값으로 치환한다. |
+| Temp | | |
+| Atemp | | |
+| Humidity | | |
+| Windspeed | | |
 
 ---
 
