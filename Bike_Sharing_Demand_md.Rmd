@@ -151,31 +151,20 @@ colSums(is.na(data))
 nrow(data) == length(unique(data$datetime))
 ```
 
--> 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다. 
+-> 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.  
 
 ```{r}
-A <- ggplot(data = train, aes(x = datetime, y = casual, color = factor(workingday))) +
-    geom_point() +
-    labs(title = 'Scatter plot of data',
-        subtitle = 'with datetime(casual)')
-B <- ggplot(data = train, aes(x = datetime, y = registered, color = factor(workingday))) +
-    geom_point() +
-    labs(title = 'Scatter plot of data',
-        subtitle = 'with datetime(registered)')
-grid.arrange(A, B, nrow = 2)
-```
-
-```{r}
-ggplot(data = data, aes(x = datetime, y = y, color = workingday)) +
+ggplot(data = data, aes(x = datetime, y = y)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
-       subtitle = 'with datetime')
+       subtitle = 'With datetime(all Y)')
 ```
 
 -> 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.  
 
-따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.
+따라서, 이 빈 구역들의 y값들을 예측하는 것이 목표이다.  
 
+  
 **season**  
 
 팩터들의 이름을 부여한다.
@@ -351,6 +340,67 @@ ggplot(data = train, aes(train$y))+
 -> 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.  
 
 
+**Checking additional Y (Casual & Registered)**  
+본 데이터에는, casual(회원의 count) + registered(비회원의 count) = y(총 카운트 합) 으로 총 3가지의 종속변수가 존재한다고 볼 수 있다.  
+분포의 차이를 확인하고 각각 다른 모형에 적합시키는 방법을 고려해 볼 수 있다.  
+
+기술통계량 비교  
+
+```{r}
+summary(data$registered)
+sd(data$registered, na.rm = TRUE)
+summary(data$casual)
+sd(data$casual, na.rm = TRUE)
+```
+
+Box plot을 통한 비교  
+
+```{r}
+
+A <- ggplot(data = data, aes(y = registered)) +
+    geom_boxplot(fill = 'blue') +
+    labs(title = 'Box plot of registered')
+B <- ggplot(data = data, aes(y = casual)) +
+    geom_boxplot(fill = 'red') +
+    labs(title = 'Box plot of casual')
+
+grid.arrange(A, B, ncol = 2)
+
+```
+
+
+Histogram을 통한 비교  
+
+```{r}
+A <- ggplot(data = data, aes(x = registered)) +
+    geom_histogram(fill = 'blue') +
+    labs(title = 'Histogram of registered')
+B <- ggplot(data = data, aes(x = casual)) +
+    geom_histogram(fill = 'red') +
+    labs(title = 'Histogram of casual')
+C <- ggplot(data = data, aes(x = y))+
+     geom_histogram()
+
+grid.arrange(A, B, C, nrow = 3)
+
+```
+
+-> 두 종속변수의 구성요소가 명확히 다른 분포를 갖는 것을 확인할 수 있으며, 나누어 예측하는 것이 적절하다.  
+
+
+```{r}
+A <- ggplot(data = train, aes(x = datetime, y = casual, color = factor(workingday))) +
+    geom_point() +
+    labs(title = 'Scatter plot of data',
+        subtitle = 'with datetime(casual)')
+B <- ggplot(data = train, aes(x = datetime, y = registered, color = factor(workingday))) +
+    geom_point() +
+    labs(title = 'Scatter plot of data',
+        subtitle = 'with datetime(registered)')
+grid.arrange(A, B, nrow = 2)
+```
+
+
 #### EDA 정리
 
 | 변수명 | 특징 | 전처리 방법 |
@@ -364,7 +414,7 @@ ggplot(data = train, aes(train$y))+
 | Atemp | Temp변수와의 높은 상관관계를 보인다. | 삭제 여부 검토 |
 | Humidity | 높은 수치를 기록한 값에서 공백이 보인다. | 높은 값이 결측값을 의미하는지 검토 |
 | Windspeed | 0과 다른 수치 사이에 공백이 보인다. | 0이 결측값을 의미하는지 검토 |
-
+| 종속변수 | y = casual + registered, 각기 다른 분포를 보인다. | 분할하여 예측했을 때, 유의한 변수 확인 |
 ---
 
 ### Data Preprocessing
@@ -402,14 +452,39 @@ same_time_idx <- which(data$time == 6)
 same_time_data <- data[same_time_idx, ]
 A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = workingday)) +
   geom_point() +
-  labs(title = 'Scatter plot of data',
+  labs(title = 'Count of registered(Grouped by workingday)',
        subtitle = 'with sametime')
-B1 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
+A2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
+  geom_point() +
+  labs(title = 'Count of casual(Grouped by workingday)',
+       subtitle = 'with sametime')
+B1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
+  geom_point() +
+  labs(title = 'Count of registered(Grouped by holiday)',
+       subtitle = 'with sametime(registered)')
+B2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
+  geom_point() +
+  labs(title = 'Count of casual(Grouped by holiday)',
+       subtitle = 'with sametime(casual)')
+
+grid.arrange(A1, B1, A2, B2, nrow = 2, ncol = 2)
+```
+ 
+ 
+```{r}
+
+same_time_idx <- which(data$time == 6)
+same_time_data <- data[same_time_idx, ]
+A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
-       subtitle = 'with sametime')
+       subtitle = 'with sametime(registered)')
+B1 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
+  geom_point() +
+  labs(title = 'Scatter plot of data',
+       subtitle = 'with sametime(casula)')
 grid.arrange(A1, B1, nrow = 2)
-```
+``` 
  
  
 

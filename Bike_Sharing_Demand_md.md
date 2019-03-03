@@ -242,29 +242,15 @@ nrow(data) == length(unique(data$datetime))
 -&gt; 문자열 데이터이며, 데이터의 분할이 필요함을 확인할 수 있다.
 
 ``` r
-A <- ggplot(data = train, aes(x = datetime, y = casual, color = factor(workingday))) +
-    geom_point() +
-    labs(title = 'Scatter plot of data',
-        subtitle = 'with datetime(casual)')
-B <- ggplot(data = train, aes(x = datetime, y = registered, color = factor(workingday))) +
-    geom_point() +
-    labs(title = 'Scatter plot of data',
-        subtitle = 'with datetime(registered)')
-grid.arrange(A, B, nrow = 2)
-```
-
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-6-1.png)
-
-``` r
-ggplot(data = data, aes(x = datetime, y = y, color = workingday)) +
+ggplot(data = data, aes(x = datetime, y = y)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
-       subtitle = 'with datetime')
+       subtitle = 'With datetime(all Y)')
 ```
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 -&gt; 각 월의 20일~마지막일 까지는 test에 포함된 NA값이다.
 
@@ -301,7 +287,7 @@ levels(data$season)
 boxplot(data$y ~ data$season)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 **B. ggplot을 활용한 그림**
 
@@ -316,7 +302,7 @@ ggplot(data = data) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 -&gt; 계절에 따라 y(count)의 값이 크게 변동은 없는 것을 확인할 수 있다.
 
@@ -353,7 +339,7 @@ ggplot(data = data) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 -&gt; Holiday 유무에 따라 평균의 큰 차이는 없으나 큰 Y 값들이 Holiday에 상대적으로 많은 것을 확인할 수 있다.
 
@@ -386,7 +372,7 @@ ggplot(data = data) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-13-1.png)
 
 -&gt; 평균의 차이가 크지 않은 것을 확인할 수 있다.
 
@@ -417,7 +403,7 @@ ggplot(data = train) +
     scale_x_discrete(labels = levels(data$weather))
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-16-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 -&gt; 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.
 
@@ -461,7 +447,7 @@ cor(num_train)[,5]
 corrplot(cor(num_train), method = 'circle', diag = FALSE)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 -&gt; 상관관계들을 확인할 수 있다.
 
@@ -481,7 +467,7 @@ grid.arrange(temp_hist, atemp_hist, humidity_hist, windspeed_hist, ncol=2, nrow 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-19-1.png)
 
 -&gt; 알 수 있는 사실
 - humidity에서 100으로 관측된 값들을 세부적으로 봐야 한다.
@@ -496,25 +482,122 @@ ggplot(data = train, aes(train$y))+
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
 -&gt; 왼쪽으로 치우친 것을 확인할 수 있으며, 변수변환의 필요성을 확인할 수 있다.
 
 -&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
 
+**Checking additional Y (Casual & Registered)**
+본 데이터에는, casual(회원의 count) + registered(비회원의 count) = y(총 카운트 합) 으로 총 3가지의 종속변수가 존재한다고 볼 수 있다.
+분포의 차이를 확인하고 각각 다른 모형에 적합시키는 방법을 고려해 볼 수 있다.
+
+기술통계량 비교
+
+``` r
+summary(data$registered)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ##     0.0    36.0   118.0   155.6   222.0   886.0    6493
+
+``` r
+sd(data$registered, na.rm = TRUE)
+```
+
+    ## [1] 151.039
+
+``` r
+summary(data$casual)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ##    0.00    4.00   17.00   36.02   49.00  367.00    6493
+
+``` r
+sd(data$casual, na.rm = TRUE)
+```
+
+    ## [1] 49.96048
+
+Box plot을 통한 비교
+
+``` r
+A <- ggplot(data = data, aes(y = registered)) +
+    geom_boxplot(fill = 'blue') +
+    labs(title = 'Box plot of registered')
+B <- ggplot(data = data, aes(y = casual)) +
+    geom_boxplot(fill = 'red') +
+    labs(title = 'Box plot of casual')
+
+grid.arrange(A, B, ncol = 2)
+```
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
+
+Histogram을 통한 비교
+
+``` r
+A <- ggplot(data = data, aes(x = registered)) +
+    geom_histogram(fill = 'blue') +
+    labs(title = 'Histogram of registered')
+B <- ggplot(data = data, aes(x = casual)) +
+    geom_histogram(fill = 'red') +
+    labs(title = 'Histogram of casual')
+C <- ggplot(data = data, aes(x = y))+
+     geom_histogram()
+
+grid.arrange(A, B, C, nrow = 3)
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 6493 rows containing non-finite values (stat_bin).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-23-1.png)
+
+-&gt; 두 종속변수의 구성요소가 명확히 다른 분포를 갖는 것을 확인할 수 있으며, 나누어 예측하는 것이 적절하다.
+
+``` r
+A <- ggplot(data = train, aes(x = datetime, y = casual, color = factor(workingday))) +
+    geom_point() +
+    labs(title = 'Scatter plot of data',
+        subtitle = 'with datetime(casual)')
+B <- ggplot(data = train, aes(x = datetime, y = registered, color = factor(workingday))) +
+    geom_point() +
+    labs(title = 'Scatter plot of data',
+        subtitle = 'with datetime(registered)')
+grid.arrange(A, B, nrow = 2)
+```
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-24-1.png)
+
 #### EDA 정리
 
-| 변수명     | 특징                                                                        | 전처리 방법                        |
-|------------|-----------------------------------------------------------------------------|------------------------------------|
-| Datetime   | 각 월의 20일 이후의 정보를 예측해야하며, 시계열성을 확인했다.               | Lag변수를 만든다.                  |
-| Season     | 종속변수와의 큰 연관성을 찾을 수 없었다.                                    | X                                  |
-| Holiday    | 두 범주값의 비율이 매우 비대칭이며, 종속변수와의 큰 연관성은 보이지 않는다. | X                                  |
-| Workingday | 종속변수와의 큰 연관성을 찾을 수 없었다.                                    | X                                  |
-| Weather    | 범주 4의 수가 3개로, 매우 적은 관측치를 보였다.                             | 유사한 다른 값으로 치환한다.       |
-| Temp       | Atemp변수와의 높은 상관관계를 보인다.                                       | 삭제 여부 검토                     |
-| Atemp      | Temp변수와의 높은 상관관계를 보인다.                                        | 삭제 여부 검토                     |
-| Humidity   | 높은 수치를 기록한 값에서 공백이 보인다.                                    | 높은 값이 결측값을 의미하는지 검토 |
-| Windspeed  | 0과 다른 수치 사이에 공백이 보인다.                                         | 0이 결측값을 의미하는지 검토       |
+| 변수명     | 특징                                                                        | 전처리 방법                            |
+|------------|-----------------------------------------------------------------------------|----------------------------------------|
+| Datetime   | 각 월의 20일 이후의 정보를 예측해야하며, 시계열성을 확인했다.               | Lag변수를 만든다.                      |
+| Season     | 종속변수와의 큰 연관성을 찾을 수 없었다.                                    | X                                      |
+| Holiday    | 두 범주값의 비율이 매우 비대칭이며, 종속변수와의 큰 연관성은 보이지 않는다. | X                                      |
+| Workingday | 종속변수와의 큰 연관성을 찾을 수 없었다.                                    | X                                      |
+| Weather    | 범주 4의 수가 3개로, 매우 적은 관측치를 보였다.                             | 유사한 다른 값으로 치환한다.           |
+| Temp       | Atemp변수와의 높은 상관관계를 보인다.                                       | 삭제 여부 검토                         |
+| Atemp      | Temp변수와의 높은 상관관계를 보인다.                                        | 삭제 여부 검토                         |
+| Humidity   | 높은 수치를 기록한 값에서 공백이 보인다.                                    | 높은 값이 결측값을 의미하는지 검토     |
+| Windspeed  | 0과 다른 수치 사이에 공백이 보인다.                                         | 0이 결측값을 의미하는지 검토           |
+| 종속변수   | y = casual + registered, 각기 다른 분포를 보인다.                           | 분할하여 예측했을 때, 유의한 변수 확인 |
 
 ------------------------------------------------------------------------
 
@@ -541,7 +624,7 @@ ggplot(data = data, aes(x = time, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-22-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-25-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
@@ -550,12 +633,45 @@ same_time_idx <- which(data$time == 6)
 same_time_data <- data[same_time_idx, ]
 A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = workingday)) +
   geom_point() +
-  labs(title = 'Scatter plot of data',
+  labs(title = 'Count of registered(Grouped by workingday)',
        subtitle = 'with sametime')
-B1 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
+A2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
+  geom_point() +
+  labs(title = 'Count of casual(Grouped by workingday)',
+       subtitle = 'with sametime')
+B1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
+  geom_point() +
+  labs(title = 'Count of registered(Grouped by holiday)',
+       subtitle = 'with sametime(registered)')
+B2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
+  geom_point() +
+  labs(title = 'Count of casual(Grouped by holiday)',
+       subtitle = 'with sametime(casual)')
+
+grid.arrange(A1, B1, A2, B2, nrow = 2, ncol = 2)
+```
+
+    ## Warning: Removed 270 rows containing missing values (geom_point).
+
+    ## Warning: Removed 270 rows containing missing values (geom_point).
+
+    ## Warning: Removed 270 rows containing missing values (geom_point).
+
+    ## Warning: Removed 270 rows containing missing values (geom_point).
+
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-26-1.png)
+
+``` r
+same_time_idx <- which(data$time == 6)
+same_time_data <- data[same_time_idx, ]
+A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
-       subtitle = 'with sametime')
+       subtitle = 'with sametime(registered)')
+B1 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
+  geom_point() +
+  labs(title = 'Scatter plot of data',
+       subtitle = 'with sametime(casula)')
 grid.arrange(A1, B1, nrow = 2)
 ```
 
@@ -563,7 +679,7 @@ grid.arrange(A1, B1, nrow = 2)
 
     ## Warning: Removed 270 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-23-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-27-1.png)
 
 **날짜로 시간대 나누기**
 
@@ -618,7 +734,7 @@ ggplot(data = data, aes(x = daytime, y = y)) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-25-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -736,7 +852,7 @@ ggplot(data = data, aes(data$windspeed))+
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-33-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-1.png)
 
 -&gt; 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),
 이를 대체할 방법을 찾는다.
@@ -757,7 +873,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-35-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-39-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -804,13 +920,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-39-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-43-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-39-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-43-2.png)
 
 -&gt; 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.
 
@@ -831,13 +947,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-41-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-45-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-41-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-45-2.png)
 
 -&gt; 변환 전에 비해, 나아진 모습을 보인다.
 
