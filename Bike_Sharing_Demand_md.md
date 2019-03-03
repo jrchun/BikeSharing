@@ -435,12 +435,26 @@ cor(num_data)
 test data에는 y값이 존재하지 않으므로, train data에서 numeric data를 추출하여 correlation을 계산한다.
 
 ``` r
-num_train <- train[, c('temp', 'atemp', 'humidity', 'windspeed', 'y')]
-cor(num_train)[,5]
+num_train <- train[, c('temp', 'atemp', 'humidity', 'windspeed', 'y' ,'casual', 'registered')]
+cor(num_train)
 ```
 
-    ##       temp      atemp   humidity  windspeed          y 
-    ##  0.3944536  0.3897844 -0.3173715  0.1013695  1.0000000
+    ##                   temp       atemp    humidity   windspeed          y
+    ## temp        1.00000000  0.98494811 -0.06494877 -0.01785201  0.3944536
+    ## atemp       0.98494811  1.00000000 -0.04353571 -0.05747300  0.3897844
+    ## humidity   -0.06494877 -0.04353571  1.00000000 -0.31860699 -0.3173715
+    ## windspeed  -0.01785201 -0.05747300 -0.31860699  1.00000000  0.1013695
+    ## y           0.39445364  0.38978444 -0.31737148  0.10136947  1.0000000
+    ## casual      0.46709706  0.46206654 -0.34818690  0.09227619  0.6904136
+    ## registered  0.31857128  0.31463539 -0.26545787  0.09105166  0.9709481
+    ##                 casual  registered
+    ## temp        0.46709706  0.31857128
+    ## atemp       0.46206654  0.31463539
+    ## humidity   -0.34818690 -0.26545787
+    ## windspeed   0.09227619  0.09105166
+    ## y           0.69041357  0.97094811
+    ## casual      1.00000000  0.49724969
+    ## registered  0.49724969  1.00000000
 
 -&gt; 각각의 상관계수를 확인할 수 있다.
 
@@ -618,14 +632,26 @@ grid.arrange(A, B, nrow = 2)
 -   시간대별로 다른 대여수? 버리고 싶지만, 시간대별로 온도가 너무 다르다.
 
 -&gt; 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?
+너무 많은 정보의 삭제가 우려된다. 각 시간을 범주형으로 살리고, lag 변수를 만들어서 파생변수로 사용해보자.
 
 **시간 분할해서 plot그려보기.**
 
+시간 분할
+
 ``` r
 sp <- unlist(strsplit(data$datetime, ":"))
+#시간 추출
 time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
+#일시 추출
+day <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 1, 10)
+day <- as.integer(gsub("-", "" , day, perl=TRUE))
+
 data$time <- as.integer(time)
-ggplot(data = data, aes(x = time, y = y)) +
+data$day <- as.numeric(factor(rank(day))) #일시를 단순한 순서로 변경
+```
+
+``` r
+ggplot(data = data, aes(x = day, y = y)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
        subtitle = 'with time')
@@ -633,25 +659,29 @@ ggplot(data = data, aes(x = time, y = y)) +
 
     ## Warning: Removed 6493 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-25-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-26-1.png)
 
 -&gt; 일정한 추세를 보이는 것을 확인할 수 있었다.
 
 ``` r
 same_time_idx <- which(data$time == 6)
 same_time_data <- data[same_time_idx, ]
+
 A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = workingday)) +
   geom_point() +
   labs(title = 'Count of registered(Grouped by workingday)',
        subtitle = 'with sametime')
+
 A2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
   geom_point() +
   labs(title = 'Count of casual(Grouped by workingday)',
        subtitle = 'with sametime')
+
 B1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
   geom_point() +
   labs(title = 'Count of registered(Grouped by holiday)',
        subtitle = 'with sametime(registered)')
+
 B2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
   geom_point() +
   labs(title = 'Count of casual(Grouped by holiday)',
@@ -668,11 +698,9 @@ grid.arrange(A1, B1, A2, B2, nrow = 2, ncol = 2)
 
     ## Warning: Removed 270 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-26-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-27-1.png)
 
 ``` r
-same_time_idx <- which(data$time == 6)
-same_time_data <- data[same_time_idx, ]
 A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
   geom_point() +
   labs(title = 'Scatter plot of data',
@@ -688,7 +716,7 @@ grid.arrange(A1, B1, nrow = 2)
 
     ## Warning: Removed 270 rows containing missing values (geom_point).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-27-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-28-1.png)
 
 **날짜로 시간대 나누기**
 
@@ -743,7 +771,7 @@ ggplot(data = data, aes(x = daytime, y = y)) +
 
     ## Warning: Removed 6493 rows containing non-finite values (stat_boxplot).
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-29-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-30-1.png)
 
 -&gt; 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.
 
@@ -861,7 +889,7 @@ ggplot(data = data, aes(data$windspeed))+
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-37-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-38-1.png)
 
 -&gt; 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),
 이를 대체할 방법을 찾는다.
@@ -882,7 +910,7 @@ ggplot(data = data, aes(x = weather, y = windspeed)) +
        subtitle = 'Grouped by weather')
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-39-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-40-1.png)
 
 -&gt; 큰 영향을 보이지 않는 것 같아 보인다.
 
@@ -929,13 +957,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-43-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-44-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-43-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-44-2.png)
 
 -&gt; 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.
 
@@ -956,13 +984,13 @@ par(mfrow = c(2,2))
 plot(fit1_reg)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-45-1.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-46-1.png)
 
 ``` r
 plot(fit1_cas)
 ```
 
-![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-45-2.png)
+![](Bike_Sharing_Demand_md_files/figure-markdown_github/unnamed-chunk-46-2.png)
 
 -&gt; 변환 전에 비해, 나아진 모습을 보인다.
 
