@@ -14,13 +14,13 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 
 [2. 분석 과정](#분석-과정)
 
-    [* 데이터 구조 확인](#데이터-구조-확인)  
+[데이터 구조 확인](#데이터-구조-확인)
 
-    [* 사전 가설 수립(Make insight)](#가설-사전-수립(Make-insights))  
+[사전 가설 수립(Make insight)](#가설-사전-수립(Make-insights))
 
-    [* EDA / Data preprocessing](#Exproratory-Data-Analysis-(EDA))  
+[EDA / Data preprocessing](#Exproratory-Data-Analysis-(EDA))
 
-    [* Modeling](#Modeling)  
+[Modeling](#Modeling)
 
 [3. 결론](#한계점)
 
