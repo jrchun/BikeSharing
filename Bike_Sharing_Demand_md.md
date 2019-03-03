@@ -10,14 +10,13 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 분석 과정 목차
 --------------
 
-1.  변수 정의
-2.  분석 과정
-    -   데이터 구조 확인
-    -   사전 가설 수립(Make insight)
-    -   EDA / Data preprocessing
-    -   Modeling
-    -   MSE Checking
-3.  결론
+[1. 변수 정의](##%20변수-정의)
+[2. 분석 과정](##%20분석-과정)
+[\* 데이터 구조 확인](###%20데이터-구조-확인)
+[\* 사전 가설 수립(Make insight)](###%20가설-사전-수립(Make-insights))
+[\* EDA / Data preprocessing](###%20Exproratory-Data-Analysis-(EDA)) [\* Modeling](###%20Modeling)
+
+[3. 결론](##%20한계점)
 
 ------------------------------------------------------------------------
 
@@ -61,7 +60,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 분석 과정
 ---------
 
-### 데이터 구조확인
+### 데이터 구조 확인
 
 **Initialize**
 
@@ -489,6 +488,7 @@ ggplot(data = train, aes(train$y))+
 -&gt; 또한 변수의 성질(0 이상의 정수)에 따라서 Possion regression의 적합을 생각할 수 있다.
 
 **Checking additional Y (Casual & Registered)**
+
 본 데이터에는, casual(회원의 count) + registered(비회원의 count) = y(총 카운트 합) 으로 총 3가지의 종속변수가 존재한다고 볼 수 있다.
 분포의 차이를 확인하고 각각 다른 모형에 적합시키는 방법을 고려해 볼 수 있다.
 
@@ -549,7 +549,9 @@ B <- ggplot(data = data, aes(x = casual)) +
     geom_histogram(fill = 'red') +
     labs(title = 'Histogram of casual')
 C <- ggplot(data = data, aes(x = y))+
-     geom_histogram()
+    geom_histogram() +
+    labs(title = 'Histogram of all y',
+         subtitle = 'Sum of registered & casual')
 
 grid.arrange(A, B, C, nrow = 3)
 ```
@@ -571,6 +573,7 @@ grid.arrange(A, B, C, nrow = 3)
 -&gt; 두 종속변수의 구성요소가 명확히 다른 분포를 갖는 것을 확인할 수 있으며, 나누어 예측하는 것이 적절하다.
 
 ``` r
+#workingday로 구분하여 확인하는 casual과 registered의 분포 차이
 A <- ggplot(data = train, aes(x = datetime, y = casual, color = factor(workingday))) +
     geom_point() +
     labs(title = 'Scatter plot of data',
@@ -1289,7 +1292,8 @@ write.csv(sampleSubmission_2, file = 'smapleSubmission_github_2.csv', row.names 
 
 ------------------------------------------------------------------------
 
-**한계점**
+한계점
+------
 
 현재 점수는 WindSpeed(풍속) 변수의 0값이 많은 것을 적절한 값으로 채우지 못한 결과이다.
 즉 EDA과정에서 누락된 부분이 존재하므로, 추후에 수정과정을 통하여 더 나은 결과를 얻어야 할 것이다.
