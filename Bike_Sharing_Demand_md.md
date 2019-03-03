@@ -10,13 +10,19 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 분석 과정 목차
 --------------
 
-[1. 변수 정의](##%20변수-정의)
-[2. 분석 과정](##%20분석-과정)
-[\* 데이터 구조 확인](###%20데이터-구조-확인)
-[\* 사전 가설 수립(Make insight)](###%20가설-사전-수립(Make-insights))
-[\* EDA / Data preprocessing](###%20Exproratory-Data-Analysis-(EDA)) [\* Modeling](###%20Modeling)
+[1. 변수 정의](#변수-정의)
 
-[3. 결론](##%20한계점)
+[2. 분석 과정](#분석-과정)
+
+    [* 데이터 구조 확인](#데이터-구조-확인)  
+
+    [* 사전 가설 수립(Make insight)](#가설-사전-수립(Make-insights))  
+
+    [* EDA / Data preprocessing](#Exproratory-Data-Analysis-(EDA))  
+
+    [* Modeling](#Modeling)  
+
+[3. 결론](#한계점)
 
 ------------------------------------------------------------------------
 
