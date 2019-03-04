@@ -18,7 +18,9 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 
 [사전 가설 수립(Make insight)](#가설-사전-수립)
 
-[EDA / Data preprocessing](#Exproratory-Data-Analysis)
+[EDA](#Exproratory-Data-Analysis)
+
+[Data preprocessing](#Data-Preprocessing)
 
 [Modeling](#Modeling)
 
