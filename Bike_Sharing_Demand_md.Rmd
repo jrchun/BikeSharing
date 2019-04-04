@@ -362,7 +362,7 @@ grid.arrange(temp_hist, atemp_hist, humidity_hist, windspeed_hist, ncol=2, nrow 
 ```
   
 -> 알 수 있는 사실  
-- humidity에서 100으로 관측된 값들을 세부적으로 봐야 한다.  
+- humidity에서 100으로 관측된 값들을 세부적으로 봐야 한다. : 비오는 날의 습도는 100!  
 - windspeed에서 0으로 관측된 값들(NA로 추청)이 보인다.
 
 
@@ -460,7 +460,7 @@ grid.arrange(A, B, nrow = 2)
 | Weather | 범주 4의 수가 3개로, 매우 적은 관측치를 보였다. | 유사한 다른 값으로 치환한다. |
 | Temp | Atemp변수와의 높은 상관관계를 보인다. | 삭제 여부 검토 |
 | Atemp | Temp변수와의 높은 상관관계를 보인다. | 삭제 여부 검토 |
-| Humidity | 높은 수치를 기록한 값에서 공백이 보인다. | 높은 값이 결측값을 의미하는지 검토 |
+| Humidity | 높은 수치를 기록한 값에서 공백이 보인다. | 100의 값은 비오는 날을 의미한다. |
 | Windspeed | 0과 다른 수치 사이에 공백이 보인다. | 0이 결측값을 의미하는지 검토 |
 | 종속변수 | y = casual + registered, 각기 다른 분포를 보인다. | 분할하여 예측했을 때, 유의한 변수 확인 |
 ---
@@ -688,19 +688,16 @@ barplot(table(data[which(data$windspeed != 0), "windspeed"]))
 2180개의 결측값, 풍속에 영향을 줄 만한 변수는? : season, weather, temp, atemp, humidity, time, day, month, discomfort  
 
 ```{r}
-variable_for_windspeed <- c('season', 'weather', 'temp', 'atemp', 'humidity', 'time', 'day', 'month', 'discomfort', 'windspeed')
-data_wind <- data[, variable_for_windspeed]
-
 # train_wind / test_wind / val_wind 데이터 분할
-train_wind <- data_wind[which(data_wind$windspeed != 0), ]
-test_wind <- data_wind[which(data_wind$windspeed == 0), ]
+train_wind <- data[which(data$windspeed != 0), ]
+test_wind <- data[which(data$windspeed == 0), ]
 set.seed(1)
 val_idx <- createDataPartition(train_wind$windspeed, p = 0.3, list = FALSE)
 val_wind <- train_wind[val_idx, ]
-train_wind <- train_wind[-val_idx, ]
+tr_wind <- train_wind[-val_idx, ]
 ```
 
-모형 적합전, train에 들어갈 formula와 trainControl인자 설정  
+모형 적합전, train에 들어갈 formula(날씨변수)와 trainControl인자 설정  
 ```{r}
 f_1 <- formula(windspeed ~ season + weather + temp + atemp + humidity + time + day + month + discomfort)
 #파라메터 설정시에 진행할 CV방법 : 3repeated 5-fold cross validation
@@ -712,41 +709,96 @@ tc_1 <- trainControl(method = 'repeatedcv',
 **method1 . ctree2 사용. **  
 
 ```{r}
-wind_model_tree <- train(f_1, method = 'ctree2',  trControl = tc_1, data = train_wind) #ctree2는 maxdepth도 조절
+wind_model_tree <- train(f_1, method = 'ctree2',  trControl = tc_1, data = tr_wind) #ctree2는 maxdepth도 조절
 plot(wind_model_tree$finalModel)
 wind_pre <- predict(wind_model_tree, newdata = val_wind)
 mean((wind_pre-val_wind$windspeed)^2)
 ```
 
-**method2 . randomForest 사용. **  
+**method2 . randomForest 사용. **   
 
 ```{r}
 #학습시간 쒯~~~~ 해결방법은?
-wind_model_rf <- train(f_1, method = 'ranger', data = train_wind) # rf(randomForest보다 빠르대!) trControl = tc_1,
+wind_model_rf <- train(f_1, method = 'ranger', 
+                       importance = 'impurity', #impurity : 불순도를 통한 variableimportance
+                       data = tr_wind) # rf(randomForest보다 빠르대!) trControl = tc_1,
 wind_pre <- predict(wind_model_rf, newdata = val_wind)
 mean((wind_pre-val_wind$windspeed)^2)
 ```
 
+**Variable Importance plot in predicting windspeed**  
+
 ```{r}
-#학습시간 쒯~~~~ 해결방법은?
-wind_model_rf <- train(f_1, method = 'ranger', data = train_wind) # rf(randomForest보다 빠르대!) trControl = tc_1,
-wind_pre <- predict(wind_model_rf, newdata = val_wind)
-mean((wind_pre-val_wind$windspeed)^2)
+imp_var <- data.frame(importance(wind_model_rf$finalModel))
+Variable <- row.names(imp_var)
+Importance <- imp_var[, 1]
+
+imp_var <- data.frame('Variable' = Variable, 'Importance' = Importance)
+imp_var <- imp_var[order(imp_var$Importance, decreasing = TRUE), ] #내림차순 정렬
+
+imp_var_5 <- imp_var[c(1:5), ]
+imp_var_7 <- imp_var[c(1:7), ]
+
+imp_plot_5 <- ggplot(data = imp_var_5, aes(x = reorder(Variable, -Importance), y = Importance)) +
+  geom_col() +
+  labs(title = 'Variable Imp plot with 5 variable',
+       x = 'Variable')
+
+imp_plot_7 <- ggplot(data = imp_var_7, aes(x = reorder(Variable, -Importance), y = Importance)) +
+  geom_col() +
+  labs(title = 'Variable Imp plot with 7 variable',
+       x = 'Variable')
+
+imp_plot_all <- ggplot(data = imp_var, aes(x = reorder(Variable, -Importance), y = Importance)) +
+  geom_col() +
+  labs(title = 'Variable Imp plot with all variable',
+       x = 'Variable')
+
+grid.arrange(imp_plot_5, imp_plot_7, imp_plot_all, nrow = 3)
 ```
 
-
-**method2 . 중앙값(Median)으로 대치 **  
+**method3 . 중앙값(Median)으로 대치 **  
 
 ```{r}
-wind_pre_median <- median(train_wind$windspeed)
+wind_pre_median <- median(tr_wind$windspeed)
 mean((wind_pre_median - val_wind$windspeed)^2)
 ```
 
-**method3 . 평균(Mean)으로 대치 **  
+**method4 . 평균(Mean)으로 대치 **  
 
 ```{r}
-wind_pre_mean <- mean(train_wind$windspeed)
+wind_pre_mean <- mean(tr_wind$windspeed)
 mean((wind_pre_mean - val_wind$windspeed)^2)
+```
+
+-> RandomForest로 결측값을 대체하자.  
+
+**결측값(windspeed) 대체**  
+
+```{r}
+#포뮬러 설정 : 날씨변수
+f_wind <- formula(windspeed ~ season + weather + temp + atemp + humidity + time + day + month + discomfort)
+
+#파라메터 설정시에 진행할 CV방법 : 3repeated 5-fold cross validation
+tc_wind <- trainControl(method = 'repeatedcv', 
+                        number = 5,
+                        repeats = 3)
+
+wind_model_rf_final <- train(f_wind, method = 'ranger', 
+                             importance = 'impurity',
+                             trControl = tc_1,
+                             data = train_wind) # train_wind_a : 0이 아닌 값을 갖는 모든 데이터
+wind_pre <- predict(wind_model_rf_final, newdata = test_wind)
+test_wind$windspeed <- round(wind_pre, digits = 4) #4자리수까지 반올림 후, 대체
+```
+
+**Baseline 완성**  
+
+```{r}
+data_baseline <- rbind(test_wind, train_wind)
+#save.image(file='BikeEnv.RData')rm(list = ls())
+rm(list = ls())
+load('C:\\BikeEnv.RData')
 ```
 
 
@@ -766,6 +818,7 @@ sum(train$y == (train$casual + train$registered))
 **Data partitioning**  
 
 ```{r}
+
 train1 <- data[1 : nrow(train), ]
 test1 <- data[-c(1:nrow(train)), ]
 ```
