@@ -796,7 +796,7 @@ test_wind$windspeed <- round(wind_pre, digits = 4) #4자리수까지 반올림 �
 
 ```{r}
 data_baseline <- rbind(test_wind, train_wind)
-#save.image(file='BikeEnv.RData')rm(list = ls())
+#save.image(file='BikeEnv.RData')
 rm(list = ls())
 load('C:\\BikeEnv.RData')
 ```
