@@ -9,6 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+Sys.setlocale('LC_ALL','C') #에러방지
 ```
 
 #**자전거 대여 수요예측 분석**
@@ -86,6 +87,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 **Initialize**  
 
 ```{r}
+
 rm(list=ls())
 library(ggplot2)  #for plotting
 library(corrplot) #for correlation plot
@@ -93,9 +95,15 @@ library(dplyr)    #for %in% function
 library(caret)    #for cross validation
 library(pscl)     #for Zero-inflated poisson regression
 library(gridExtra)
+library(rpart) # train : CART
+library(party) #train : ctree
+library(randomForest) # train : rf
+library(e1071) #train : ranger(rf보다 빠른 속도)
+library(ranger) #train : ranger(rf보다 빠른 속도)
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
+
 ```
 
 ```{r}  
@@ -154,6 +162,8 @@ str(data)
 ```{r}
 colSums(is.na(data))
 ```
+**Categorical data Exploring**  
+
 **datetime**
 
 ```{r}
@@ -199,12 +209,11 @@ boxplot(data$y ~ data$season)
 **B. ggplot을 활용한 그림**
 
 ```{r}
-ggplot(data = data) +
-  geom_boxplot(aes(x = factor(season), y = y) ,fill = c('coral', 'coral1', 'coral2', 'coral3')) +
+ggplot(data = data, aes(x = season, y = y, color = season)) +
+  geom_boxplot() +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by Season' ,
-       x = 'Season') +
-  scale_x_discrete(labels = levels(data$season))
+       x = 'Season')
 ```
 
  -> 계절에 따라 y(count)의 값이 크게 변동은 없는 것을 확인할 수 있다.
@@ -220,16 +229,26 @@ table(data$holiday)
 ```
 
 -> Binary data 이며, Holiday와 Non holiday의 비율이 16879 : 500 인것을 확인할 수 있다.  
+** 비율차이 시각화 **  
 
 
 ```{r}
-ggplot(data = data) +
-  geom_boxplot(aes(x = factor(holiday), y = y, group = holiday)) +
-  aes(fill = holiday) +
+D1 <- as.data.frame(table(data$holiday))
+
+ggplot(data = D1, aes(x = Var1, y = Freq, fill = Var1)) +
+  geom_col() +
+  labs(title = 'Bar plot of frequency',
+       subtitle = 'in Holiday variable') #+
+  #stat_identity()
+```
+
+```{r}
+ggplot(data = data, aes(x = holiday, y = y, color = holiday)) +
+  geom_boxplot() +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by holiday',
-       x = 'Holiday') +
-    scale_x_discrete(labels = levels(data$holiday))
+       x = 'Holiday')# +
+    #scale_x_discrete(labels = levels(data$holiday))
 
 ```
 
@@ -246,16 +265,29 @@ table(data$workingday)
 ```
 -> 1 : 2의 비율로 분포하는 것을 확인할 수 있다.  
 
+** 비율차이 시각화 **  
+
+```{r}
+D1 <- as.data.frame(table(data$workingday))
+
+ggplot(data = D1, aes(x = Var1, y = Freq, fill = Var1)) +
+  geom_col() +
+  labs(title = 'Bar plot of frequency',
+       subtitle = 'in Workingday variable')
+  #stat_identity()
+```
+
+
+
 차이점 확인하기.  
   
 ```{r}
 ggplot(data = data) +
-  geom_boxplot(aes(x = factor(workingday), y = y, group = workingday)) +
-  aes(fill = workingday) +
+  geom_boxplot(aes(x = workingday, y = y, color = workingday)) +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by workingday',
-       x = 'workingday') +
-    scale_x_discrete(labels = levels(data$workingday))
+       x = 'workingday') #+
+    #scale_x_discrete(labels = levels(data$workingday))
 ```  
   
 -> 평균의 차이가 크지 않은 것을 확인할 수 있다.  
@@ -274,19 +306,17 @@ table(data$weather)
 
 ```{r}
 
-ggplot(data = train) +
-  geom_boxplot(aes(x = factor(weather), y = y, group = weather)) +
-  aes(fill = weather) +
+ggplot(data = data) +
+  geom_boxplot(aes(x = weather, y = y, color = weather)) +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by weather',
-       x = 'weather') +
-    scale_x_discrete(labels = levels(data$weather))
-
+       x = 'weather') #+
+    #scale_x_discrete(labels = levels(data$weather))
 ```
 
 -> 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.  
 
-**Numeric data Exploring**  
+**Numerical data Exploring**  
 
 temp, atemp, humidity, windspeed 모두 수치형 데이터이며, 이중 주목할 것은 temp(온도)와 atemp(체감온도) 일 것이다.  
 -> 따라서 두 변수는 반드시 강한 상관관계를 가질 것으로 예상된다.  
@@ -353,7 +383,7 @@ ggplot(data = train, aes(train$y))+
 본 데이터에는, casual(회원의 count) + registered(비회원의 count) = y(총 카운트 합) 으로 총 3가지의 종속변수가 존재한다고 볼 수 있다.  
 분포의 차이를 확인하고 각각 다른 모형에 적합시키는 방법을 고려해 볼 수 있다.  
 
-기술통계량 비교  
+**기술통계량 비교**  
 
 ```{r}
 summary(data$registered)
@@ -362,7 +392,14 @@ summary(data$casual)
 sd(data$casual, na.rm = TRUE)
 ```
 
-Box plot을 통한 비교  
+**Box plot을 통한 비교**  
+
+```{r}
+ggplot(data = data) +
+  geom_boxplot(aes(y = registered, fill = 'blue', alpha = 0.5)) +
+  geom_boxplot(aes(y = casual, fill = 'red', alpha = 0.5)) +
+  labs(title = 'Box plot of registered')
+```
 
 ```{r}
 
@@ -372,13 +409,12 @@ A <- ggplot(data = data, aes(y = registered)) +
 B <- ggplot(data = data, aes(y = casual)) +
     geom_boxplot(fill = 'red') +
     labs(title = 'Box plot of casual')
-
 grid.arrange(A, B, ncol = 2)
 
 ```
 
 
-Histogram을 통한 비교  
+**Histogram을 통한 비교**  
 
 ```{r}
 A <- ggplot(data = data, aes(x = registered)) +
@@ -441,6 +477,13 @@ grid.arrange(A, B, nrow = 2)
 
 **시간 분할해서 plot그려보기.**  
 
+```{r}
+#sp <- unlist(strsplit(data$datetime, " "))
+#시간 추출
+#time <- sp[seq(from = 1, to = length(sp), by = 2)]
+#table(time)
+```
+
 시간 분할
 ```{r}
 sp <- unlist(strsplit(data$datetime, ":"))
@@ -452,6 +495,8 @@ day <- as.integer(gsub("-", "" , day, perl=TRUE))
 
 data$time <- as.integer(time)
 data$day <- as.numeric(factor(rank(day))) #일시를 단순한 순서로 변경
+
+head(table(data$day), 20)
 ```
 
 
@@ -472,110 +517,86 @@ same_time_data <- data[same_time_idx, ]
 A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = workingday)) +
   geom_point() +
   labs(title = 'Count of registered(Grouped by workingday)',
-       subtitle = 'with sametime')
+       subtitle = 'with sametime(ex.6AM)')
 
 A2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = workingday)) +
   geom_point() +
   labs(title = 'Count of casual(Grouped by workingday)',
-       subtitle = 'with sametime')
+       subtitle = 'with sametime(ex.6AM)')
 
 B1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
   geom_point() +
   labs(title = 'Count of registered(Grouped by holiday)',
-       subtitle = 'with sametime(registered)')
+       subtitle = 'with sametime(ex.6AM)')
 
 B2 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
   geom_point() +
   labs(title = 'Count of casual(Grouped by holiday)',
-       subtitle = 'with sametime(casual)')
+       subtitle = 'with sametime(ex.6AM)')
 
 grid.arrange(A1, B1, A2, B2, nrow = 2, ncol = 2)
 ```
  
- 
-```{r}
-A1 <- ggplot(data = same_time_data, aes(x = datetime, y = registered, color = holiday)) +
-  geom_point() +
-  labs(title = 'Scatter plot of data',
-       subtitle = 'with sametime(registered)')
-B1 <- ggplot(data = same_time_data, aes(x = datetime, y = casual, color = holiday)) +
-  geom_point() +
-  labs(title = 'Scatter plot of data',
-       subtitle = 'with sametime(casula)')
-grid.arrange(A1, B1, nrow = 2)
-``` 
- 
- 
+-> Workingday + registered 의 조합이 가장 두드러지게 분리된다.  
 
-**날짜로 시간대 나누기**  
-
-0 ~ 6시 dawn, 7 ~ 12시 morning, 1 ~ 6시 afternoon, 7 ~ 12시 night로 범주화시킨다.
-```{r}
-dawnidx <- which(data$time == 0  #data$time %in% paste0(0:5, ":00")
-               | data$time == 1
-               | data$time == 2
-               | data$time == 3
-               | data$time == 4
-               | data$time == 5)
-morningidx <- which(data$time == 6  #data$time %in% paste0(6:11, ":00")
-                    | data$time == 7
-                    | data$time == 8
-                    | data$time == 9
-                    | data$time == 10
-                    | data$time == 11)
-afternoonidx <- which(data$time == 12  #data$time %in% paste0(12:17, ":00")
-                      | data$time == 13
-                      | data$time == 14
-                      | data$time == 15
-                      | data$time == 16
-                      | data$time == 17)
-nightidx <- which(data$time == 18  #data$time %in% paste0(18:23, ":00")
-                  | data$time == 19
-                  | data$time == 20
-                  | data$time == 21
-                  | data$time == 22
-                  | data$time == 23)
-
-data$daytime <- data$time
-
-data$daytime[dawnidx] <- 'dawn'
-data$daytime[morningidx] <- 'morning'
-data$daytime[afternoonidx] <- 'afternoon'
-data$daytime[nightidx] <- 'night'
-
-data$time <- as.factor(data$time)
-data$daytime <- as.factor(data$daytime)
-```
-**범주화된 변수로 Box plot 그리기**  
-
-```{r}
-ggplot(data = data, aes(x = daytime, y = y)) +
-  geom_boxplot(aes(group = daytime)) +
-  aes(fill = daytime) +
-  labs(title = 'Boxplot of Data' ,
-       subtitle = 'Grouped by daytime')
-```  
-
--> 각각의 시간에 따른 추세가 중요해보이므로, 범주화 시킨 변수를 삭제한다.  
-
-
-```{r}
-data <- subset(data, select = -c(daytime))
-```
-
-
-**연도, 월 추출**  
+**연도, 월에 따른 비교**  
 
 ```{r}
 data$year <- substr(data$datetime, 1, 4)
 data$year <- as.factor(data$year)
 data$month <- substr(data$datetime, 6, 7)
 data$month <- as.factor(data$month)
+```
+
+**연도에 따른 차이**  
+
+```{r}
+A <- ggplot(data = data, aes(x = year, y = registered, color = year)) +
+  geom_boxplot() +
+  labs(title = 'Boxplot of registered in year')
+B <- ggplot(data = data, aes(x = year, y = casual, color = year)) +
+  geom_boxplot() +
+  labs(title = 'Boxplot of casual in year')
+
+grid.arrange(A, B, ncol=2)
+```
+
+-> 차이의 여부 확인  
+
+**월에 따른 차이**  
+
+```{r}
+A <- ggplot(data = data, aes(x = month, y = registered, color = month)) +
+  geom_boxplot() +
+  labs(title = 'Boxplot of registered in month')
+B <- ggplot(data = data, aes(x = month, y = casual, color = month)) +
+  geom_boxplot() +
+  labs(title = 'Boxplot of casual in month')
+
+grid.arrange(A, B, nrow=2)
+```
+
+-> 일정한 추세 확인
+
+datetime변수 삭제  
+
+```{r}
 data <- subset(data, select = -c(datetime))
 ```
 
 -> datetime에서 일자를 사용하지 않는이유 : test와 train의 일자가 모두 다르기 때문.  
 
+**Lagvariable in day**  
+Lag변수에서 사용할 수 있는 변수를 선택한다. 
+
+```{r}
+#ggplot(data = data, aes(x = day, y = temp)) +
+#  geom_point()
+
+
+```
+
+-> 문제점 발견! 1차 모델링 이후에 해결법 확인하기  
 
 **season**  
 
@@ -621,6 +642,7 @@ Numeric data는 따로 처리하지 않도록 한다.
 
 **불쾌지수 변수 만들기**  
 
+Discomfort = temp & humidity
 ```{r}
 discomfort <- with(data, (9/5)*temp-
                      0.55*(1-(humidity/100))*((9/5)*temp-26)+32)
@@ -632,8 +654,11 @@ data$discomfort <- discomfort
 ```{r}
 num_data_2 <- data[which(!is.na(data$y)), c('temp', 'atemp', 'humidity', 'windspeed','discomfort', 'y')]
 cor(num_data_2)
+
+# data <- subset(data, select = -c(temp, humidity))
 ```
--> temp와 atemp, discomfort와의 multiple correlation을 확인하고, 변수 처리방안을 고민한다.  
+-> temp와 atemp, humidity, discomfort와의 correlation을 확인하고, 변수 처리방안을 고민한다.  
+-> 모형 적합 후에 삭제여부 검토  
 
 **windspeed**  
 
@@ -648,24 +673,82 @@ ggplot(data = data, aes(data$windspeed))+
 -> 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),  
 이를 대체할 방법을 찾는다.  
 
-결측값(0)을 평균값으로 대치  
+분포확인  
 ```{r}
-data[which(data$windspeed == 0), "windspeed"] <- median(data[which(data$windspeed != 0), "windspeed"])
+length(table(data$windspeed))
+```
+
+총 30개의 값으로 분포, 연속형이 아닌 범주로 봐도 될까?  
+-> 범주의 값에 따라서 편차가 크다.  
+```{r}
+barplot(table(data[which(data$windspeed != 0), "windspeed"]))
 ```
 
 
-Boxplot을 통한 풍속과 날씨의 연관성 확인   
-
+2180개의 결측값, 풍속에 영향을 줄 만한 변수는? : season, weather, temp, atemp, humidity, time, day, month, discomfort  
 
 ```{r}
-ggplot(data = data, aes(x = weather, y = windspeed)) +
-  geom_boxplot(aes(group = weather)) +
-  aes(fill = weather) +
-  labs(title = 'Boxplot of Data(windspeed)' ,
-       subtitle = 'Grouped by weather')
+variable_for_windspeed <- c('season', 'weather', 'temp', 'atemp', 'humidity', 'time', 'day', 'month', 'discomfort', 'windspeed')
+data_wind <- data[, variable_for_windspeed]
+
+# train_wind / test_wind / val_wind 데이터 분할
+train_wind <- data_wind[which(data_wind$windspeed != 0), ]
+test_wind <- data_wind[which(data_wind$windspeed == 0), ]
+set.seed(1)
+val_idx <- createDataPartition(train_wind$windspeed, p = 0.3, list = FALSE)
+val_wind <- train_wind[val_idx, ]
+train_wind <- train_wind[-val_idx, ]
 ```
 
--> 큰 영향을 보이지 않는 것 같아 보인다.  
+모형 적합전, train에 들어갈 formula와 trainControl인자 설정  
+```{r}
+f_1 <- formula(windspeed ~ season + weather + temp + atemp + humidity + time + day + month + discomfort)
+#파라메터 설정시에 진행할 CV방법 : 3repeated 5-fold cross validation
+tc_1 <- trainControl(method = 'repeatedcv', 
+                     number = 5,
+                     repeats = 3)
+```
+
+**method1 . ctree2 사용. **  
+
+```{r}
+wind_model_tree <- train(f_1, method = 'ctree2',  trControl = tc_1, data = train_wind) #ctree2는 maxdepth도 조절
+plot(wind_model_tree$finalModel)
+wind_pre <- predict(wind_model_tree, newdata = val_wind)
+mean((wind_pre-val_wind$windspeed)^2)
+```
+
+**method2 . randomForest 사용. **  
+
+```{r}
+#학습시간 쒯~~~~ 해결방법은?
+wind_model_rf <- train(f_1, method = 'ranger', data = train_wind) # rf(randomForest보다 빠르대!) trControl = tc_1,
+wind_pre <- predict(wind_model_rf, newdata = val_wind)
+mean((wind_pre-val_wind$windspeed)^2)
+```
+
+```{r}
+#학습시간 쒯~~~~ 해결방법은?
+wind_model_rf <- train(f_1, method = 'ranger', data = train_wind) # rf(randomForest보다 빠르대!) trControl = tc_1,
+wind_pre <- predict(wind_model_rf, newdata = val_wind)
+mean((wind_pre-val_wind$windspeed)^2)
+```
+
+
+**method2 . 중앙값(Median)으로 대치 **  
+
+```{r}
+wind_pre_median <- median(train_wind$windspeed)
+mean((wind_pre_median - val_wind$windspeed)^2)
+```
+
+**method3 . 평균(Mean)으로 대치 **  
+
+```{r}
+wind_pre_mean <- mean(train_wind$windspeed)
+mean((wind_pre_mean - val_wind$windspeed)^2)
+```
+
 
 ---  
 
