@@ -816,8 +816,6 @@ length(table(test_baseline$day)) * 24 - nrow(test_baseline) # 107개의 NA를 �
 ```{r}
 ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24), y = temp)) +
   geom_point(size = 0.3)
-
-data_baseline
 ```
 
 -> Lag변수 제외한 채로, 모형적합해보기.
