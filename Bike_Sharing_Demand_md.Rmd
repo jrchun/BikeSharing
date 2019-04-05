@@ -1055,34 +1055,20 @@ fitrr_log_reg <- train(form_log_reg, method = 'ridge',  data = T_model_reg) #trC
 **모형 평가**  
 
 ```{r}
-pred_cas <- exp(predict(fitrl_log_cas, newdata = V_model_cas))-1
-pred_reg <- exp(predict(fitrl_log_reg, newdata = V_model_reg))-1
+#pred_cas <- exp(predict(fitrl_log_cas, newdata = V_model_cas))-1
+#pred_reg <- exp(predict(fitrl_log_reg, newdata = V_model_reg))-1
 
-MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
-MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
-RMSE_cas <- sqrt(MSE_cas)
-RMSE_reg <- sqrt(MSE_reg)
-list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
+#MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
+#MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
+#RMSE_cas <- sqrt(MSE_cas)
+#RMSE_reg <- sqrt(MSE_reg)
+#list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
 
 **앙상블**
 ```{r}
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
-
-#T_model_reg_2011 <- T_model_reg[which(T_model_reg$year == 2011), ]
-#T_model_reg_2012 <- T_model_reg[which(T_model_reg$year == 2012), ]
-#V_model_reg_2011 <- V_model_reg[which(V_model_reg$year == 2011), ]
-#V_model_reg_2012 <- V_model_reg[which(V_model_reg$year == 2012), ]
-
-#fit_zi_reg_2011 <- zeroinfl(formula = form_zi_reg,
-#                            data = T_model_reg_2011)
-
-#fit_pr_reg_2012 <- train(form_pr_reg, method = 'glm',  family = 'poisson', data = T_model_reg_2012)
-#sqrt(mean((predict(fit_zi_reg_2011, newdata = V_model_reg_2011) - V_model_reg_2011$registered)^2))
-#sqrt(mean((predict(fit_pr_reg_2012, newdata = V_model_reg_2012) - V_model_reg_2012$registered)^2))
-#V6 <- c(predict(fit_zi_reg_2011, newdata = V_model_reg_2011), predict(fit_pr_reg_2012, newdata = V_model_reg_2012))
-#V6 <- V6[index(V6)]
 
 #Linear regression, Ridge regression
 form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
@@ -1120,8 +1106,8 @@ fit_zi_reg <- zeroinfl(formula = form_zi_reg,
 pred_lm_cas <- exp(predict(fitlm_log_cas, newdata = V_model_cas))-1
 pred_lm_reg <- exp(predict(fitlm_log_reg, newdata = V_model_reg))-1
 
-pred_rr_cas <- exp(predict(fitrr_log_cas, newdata = V_model_cas))-1
-pred_rr_reg <- exp(predict(fitrr_log_reg, newdata = V_model_reg))-1
+#pred_rr_cas <- exp(predict(fitrr_log_cas, newdata = V_model_cas))-1
+#pred_rr_reg <- exp(predict(fitrr_log_reg, newdata = V_model_reg))-1
 
 pred_pr_cas <- predict(fit_pr_cas, newdata = V_model_cas)
 pred_pr_reg <- predict(fit_pr_reg, newdata = V_model_reg)
@@ -1129,25 +1115,26 @@ pred_pr_reg <- predict(fit_pr_reg, newdata = V_model_reg)
 pred_zi_cas <- predict(fit_zi_cas, newdata = V_model_cas)
 pred_zi_reg <- predict(fit_zi_reg, newdata = V_model_reg)
 
-ens_data_cas <- as.data.frame(cbind(pred_lm_cas, pred_rr_cas, pred_pr_cas, pred_zi_cas, V_model_cas$casual, V6))
-ens_data_reg <- as.data.frame(cbind(pred_lm_reg, pred_rr_reg, pred_pr_reg, pred_zi_reg, V_model_reg$registered, V6))
+ens_data_cas <- as.data.frame(cbind(pred_lm_cas, pred_pr_cas, pred_zi_cas, V_model_cas$casual)) # pred_rr_cas,
+ens_data_reg <- as.data.frame(cbind(pred_lm_reg, pred_pr_reg, pred_zi_reg, V_model_reg$registered)) # pred_rr_reg, 
 
 result_cas <- as.vector(apply(ens_data_cas, FUN = mean, MARGIN = 1))
 RMSE_cas <- sqrt(mean((V_model_cas$casual-result_cas)^2))
 
-result_reg <- as.vector(apply(ens_data_reg[,c(2, 3)], FUN = mean, MARGIN = 1))
+result_reg <- as.vector(apply(ens_data_reg[,c(2:3)], FUN = mean, MARGIN = 1))
 RMSE_reg <- sqrt(mean((V_model_reg$registered-result_reg)^2))
+RMSE_reg
 
 RMSE_reg <- sqrt(mean((V_model_reg$registered-result_reg)^2))
 
 
 ggplot(data = ens_data_reg, aes(x = index(ens_data_reg), y = pred_pr_reg)) +
   geom_point() +
-  geom_point(aes(x = index(ens_data_reg), y = V5, color = 'red')) #크고 작은 데이터들을 전혀 예측하지 못하네
+  geom_point(aes(x = index(ens_data_reg), y = V4, color = 'red')) #크고 작은 데이터들을 전혀 예측하지 못하네
 
 ggplot(data = ens_data_cas, aes(x = index(ens_data_cas), y = pred_pr_cas)) +
   geom_point() +
-  geom_point(aes(x = index(ens_data_cas), y = V5, color = 'red')) #얼추 예측이 잘 되는 듯
+  geom_point(aes(x = index(ens_data_cas), y = V4, color = 'red')) #얼추 예측이 잘 되는 듯
 ```
 
 **최종모형 적합**  
