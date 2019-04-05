@@ -925,7 +925,8 @@ caret::createDataPartition을 활용한 data partition
 
 ```{r}
 set.seed(1)
-
+train_baseline$time <- factor(train_baseline$time)
+test_baseline$time <- factor(test_baseline$time)
 Caret_idx_cas <- createDataPartition(train_baseline$casual, p = 0.8, list = FALSE) 
 Caret_idx_reg <- createDataPartition(train_baseline$registered, p = 0.8, list = FALSE) 
 T_model_cas <- train_baseline[Caret_idx_cas, ]
@@ -939,7 +940,7 @@ V_model_reg <- train_baseline[-Caret_idx_reg, ]
 직전 확인한대로, 선택한 변수들로 모형을 적합시킨다. (다중공선성과 가정을 고려한 변수선택)
 
 ```{r}
-N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
@@ -963,12 +964,12 @@ RMSE_reg <- sqrt(MSE_reg)
 list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
 
--> RMSE_cas : 37.2382, RMSE_reg : 137.6699  
+-> RMSE_cas : 25.4308, RMSE_reg : 80.7288  
 
 **Poisson regression**  
 
 ```{r}
-N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 form_pr_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+')))
@@ -996,15 +997,15 @@ RMSE_reg <- sqrt(MSE_reg)
 list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
 
--> RMSE_cas : 59.4892, RMSE_reg : 210.4713  
+-> RMSE_cas : 59.3863, RMSE_reg : 210.3224  
 
-**Model 4 fitting : inflated poisson regression **  
+**Zero Inflated poisson regression **  
 ```{r}
 #mat_f4 <- subset(T_model, select = c('season','workingday','weather','temp','atemp','humidity',
 #                                                        'windspeed','time','year','discomfort'))
 #fit4_reg <- zip.mod(T_model$y, mat_f4)
 
-N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
@@ -1033,11 +1034,11 @@ RMSE_reg <- sqrt(MSE_reg)
 list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
 
--> RMSE_cas : 33.4605, RMSE_reg : 122.6731  
+-> RMSE_cas : 21.47525, RMSE_reg : 70.57711  
 
 **Ridge regression**
 ```{r}
-N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
@@ -1047,8 +1048,8 @@ tc <- trainControl(method = 'repeatedcv',
                    number = 5,
                    repeats = 3)
 
-fitrr_log_cas <- train(form_log_cas, method = 'ridge',  trControl = tc, data = T_model_cas)
-fitrr_log_reg <- train(form_log_reg, method = 'ridge',  trControl = tc, data = T_model_reg)
+fitrr_log_cas <- train(form_log_cas, method = 'ridge',  data = T_model_cas) #trControl = tc, 
+fitrr_log_reg <- train(form_log_reg, method = 'ridge',  data = T_model_reg) #trControl = tc, 
 ```
 
 **모형 평가**  
@@ -1066,7 +1067,7 @@ list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 
 **앙상블**
 ```{r}
-N_var <- c('y', 'casual', 'registered', 'season', 'year','month',  'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 #T_model_reg_2011 <- T_model_reg[which(T_model_reg$year == 2011), ]
@@ -1156,7 +1157,7 @@ ggplot(data = ens_data_cas, aes(x = index(ens_data_cas), y = pred_pr_cas)) +
 **Final model fitting**  
 
 ```{r}
-N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
