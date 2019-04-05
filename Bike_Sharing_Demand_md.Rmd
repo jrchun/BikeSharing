@@ -100,6 +100,7 @@ library(party) #train : ctree
 library(randomForest) # train : rf
 library(e1071) #train : ranger(rf보다 빠른 속도)
 library(ranger) #train : ranger(rf보다 빠른 속도)
+library(car) # for vif function(multicollinearity)
 setwd('C:\\github\\Project\\BikeSharing')
 train <- read.csv('train.csv', stringsAsFactors = F)
 test <- read.csv('test.csv', stringsAsFactors = F)
@@ -631,7 +632,7 @@ list(Index = which(data$weather == 4),
 
 ```{r}
 data[which(data$weather == 4), 'weather'] = '3'
-data$weather <- as.factor(data$weather)
+data$weather <- factor(data$weather) #범주4 제거
 ```
 
 **Numeric data**  
@@ -786,17 +787,45 @@ tc_wind <- trainControl(method = 'repeatedcv',
 
 wind_model_rf_final <- train(f_wind, method = 'ranger', 
                              importance = 'impurity',
-                             trControl = tc_1,
+                             trControl = tc_wind,
                              data = train_wind) # train_wind_a : 0이 아닌 값을 갖는 모든 데이터
 wind_pre <- predict(wind_model_rf_final, newdata = test_wind)
 test_wind$windspeed <- round(wind_pre, digits = 4) #4자리수까지 반올림 후, 대체
 ```
 
+```{r}
+data_baseline <- rbind(test_wind, train_wind)
+```
+
+
+**Lag변수**  
+
+```{r}
+#make new train / test data
+data_baseline <- data_baseline[order(data_baseline$day, data_baseline$time), ] #order df with day & time
+train_baseline <- data_baseline[!is.na(data_baseline$y), ]
+test_baseline <- data_baseline[is.na(data_baseline$y), ]
+#How can I make a lag Variable?
+length(table(train_baseline$day)) * 24 - nrow(train_baseline) #58개의 NA를 갖는 time
+length(table(test_baseline$day)) * 24 - nrow(test_baseline) # 107개의 NA를 갖는 time
+#lag 변수를 만든뒤, merge를 진행하면? 165개의 추가 NA값이 생긴다. 
+# -> lag변수에서 사용할 변수를 신중하게 선택해야 한다.
+```
+
+```{r}
+ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24), y = temp)) +
+  geom_point(size = 0.3)
+
+data_baseline
+```
+
+-> Lag변수 제외한 채로, 모형적합해보기.
+
 **Baseline 완성**  
 
 ```{r}
-data_baseline <- rbind(test_wind, train_wind)
-#save.image(file='BikeEnv.RData')
+
+save.image(file='BikeEnv.RData')
 rm(list = ls())
 load('C:\\BikeEnv.RData')
 ```
@@ -806,61 +835,86 @@ load('C:\\BikeEnv.RData')
 
 ###Modeling  
 
-**Model 1 : Idea 1 을 활용**  
-
 ```{r}
-length(train$y)
-sum(train$y == (train$casual + train$registered))
+str(data_baseline)
 ```
 
--> y(count) = casual + resistered임을 확인했기 때문에 따로 모형을 적합시켜서 그 합을 구해본다.  
-
-**Data partitioning**  
-
+**Data preparing**  
+data_baseline, train_baseline, test_baseline 3종류의 데이터 준비완료
 ```{r}
-
-train1 <- data[1 : nrow(train), ]
-test1 <- data[-c(1:nrow(train)), ]
+feature <- colnames(data_baseline)
 ```
 
-**환경에 따른 modeling**  
+**Linear regression**  
 
 ```{r}
-f1_reg <- formula(registered ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
-f1_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
-fit1_reg <- lm(formula = f1_reg, data = train1)
-fit1_cas <- lm(formula = f1_cas, data = train1)
+N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거
+X_var <- setdiff(feature, N_var)
+form_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+')))
+form_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+')))
+fitlm_reg <- lm(formula = form_reg, data = train_baseline)
+fitlm_cas <- lm(formula = form_cas, data = train_baseline)
 ```
+
+**모형 확인**  
+```{r}
+summary(fitlm_reg)
+```
+
+-> R스퀘어는 0.329로 잘 적합되지 않았다.  
 
 **가정 확인**  
 
 ```{r}
 par(mfrow = c(2,2))
-plot(fit1_reg)
-plot(fit1_cas)
+plot(fitlm_reg)
+mtext("lm registered", side = 3, line = -14, outer = TRUE)
+plot(fitlm_cas)
+mtext("lm casual", side = 3, line = -14, outer = TRUE)
 ```
 
 -> 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.  
 
-**Model 2 : Log-transformation with Model 1**  
+**Linear regression with Log-transformation**  
 각각의 종속변수는 0이상의 정수이므로 1을 더한뒤에 log변환을 시도한다.  
 
 ```{r}
-f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
-f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+month+discomfort)
-fit2_reg <- lm(formula = f2_reg, data = train1)
-fit2_cas <- lm(formula = f2_cas, data = train1)
+N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거
+X_var <- setdiff(feature, N_var)
+form_log_reg <- as.formula(paste('log(registered+1)~', paste0(X_var, collapse = '+')))
+form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
+fitlm_log_reg <- lm(formula = form_log_reg, data = train_baseline)
+fitlm_log_cas <- lm(formula = form_log_cas, data = train_baseline)
 ```
 
 **가정 확인**  
 
 ```{r}
 par(mfrow = c(2,2))
-plot(fit1_reg)
-plot(fit1_cas)
+plot(fitlm_log_reg)
+mtext("Log transform lm registered", side = 3, line = -14, outer = TRUE)
+plot(fitlm_log_cas)
+mtext("Log transform lm casual", side = 3, line = -14, outer = TRUE)
 ```
 
--> 변환 전에 비해, 나아진 모습을 보인다.  
+-> 변환 전에 비해, 종속변수의 정규성에 있어서 나아진 모습을 보인다.  
+
+**Interpretation of Regression**  
+Casual : 로그변환한 선형회귀모형
+```{r}
+summary(fitlm_log_cas)
+```
+
+-> R스퀘어가 0.59로 향상된 모습을 보인다.  
+-> 모든 변수가 유의하다는 것을 확인할 수 있다.  
+
+Registered : 로그변환한 선형회귀모형
+```{r}
+summary(fitlm_log_reg)
+```
+
+-> R스퀘어가 0.46로 향상된 모습을 보인다.  
+-> 모든 변수가 유의하다는 것을 확인할 수 있다.
 
 **Return to Data partition**  
 
@@ -871,228 +925,144 @@ caret::createDataPartition을 활용한 data partition
 ```{r}
 set.seed(1)
 
-Caret_idx <- createDataPartition(train1$y, p = 0.8, list = FALSE) 
-T_model <- train1[Caret_idx, ]
-V_model <- train1[-Caret_idx, ]
+Caret_idx_cas <- createDataPartition(train_baseline$casual, p = 0.8, list = FALSE) 
+Caret_idx_reg <- createDataPartition(train_baseline$registered, p = 0.8, list = FALSE) 
+T_model_cas <- train_baseline[Caret_idx_cas, ]
+V_model_cas <- train_baseline[-Caret_idx_cas, ]
+T_model_reg <- train_baseline[Caret_idx_reg, ]
+V_model_reg <- train_baseline[-Caret_idx_reg, ]
 ```
 -> set.seed()함수를 사용하여 매 시행마다 같은 데이터셋을 활용할 수 있도록 고정시킨다.  
 
-**Model 2 fitting**  
-
+**Linear regression(log transform) fitting**  
+직전 확인한대로, 선택한 변수들로 모형을 적합시킨다. (다중공선성과 가정을 고려한 변수선택)
 ```{r}
-fit2_reg <- lm(formula = f2_reg, data = T_model)
-fit2_cas <- lm(formula = f2_cas, data = T_model)
-summary(fit2_reg)
+N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+X_var <- setdiff(feature, N_var)
+
+form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
+form_log_reg <- as.formula(paste('log(registered+1)~', paste0(X_var, collapse = '+')))
+
+fitlm_log_cas <- lm(formula = form_log_cas, data = T_model_cas)
+fitlm_log_reg <- lm(formula = form_log_reg, data = T_model_reg)
 ```
 
--> month와 season계수의 직접적으로 연관되어 있으므로, NA값이 나온다. season변수를 사용하도록 한다.  
 
-**Month변수 삭제 후 다시 적합**  
-
-Month변수 삭제하기  
+**모형 평가**  
 
 ```{r}
-data1 <- subset(data, select = -c(month))
+pred_cas <- exp(predict(fitlm_log_cas, newdata = V_model_cas))-1
+pred_reg <- exp(predict(fitlm_log_reg, newdata = V_model_reg))-1
 
-train2 <- data1[1 : nrow(train), ]
-test2 <- data1[-c(1:nrow(train)), ]
+MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
+MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
+RMSE_cas <- sqrt(MSE_cas)
+RMSE_reg <- sqrt(MSE_reg)
+list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
-  
-  
-수정된 데이터 train2를 통해 다시 모형적합(formula도 수정)  
+
+-> RMSE_cas : 37.2382, RMSE_reg : 137.6699  
+
+**Poisson regression**  
 
 ```{r}
-set.seed(1)
+N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+X_var <- setdiff(feature, N_var)
 
-Caret_idx <- createDataPartition(train2$y, p = 0.8, list = FALSE) 
-T_model <- train2[Caret_idx, ]
-V_model <- train2[-Caret_idx, ]
+form_pr_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+')))
+form_pr_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+')))
 
-f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-fit2_reg <- lm(formula = f2_reg, data = T_model)
-fit2_cas <- lm(formula = f2_cas, data = T_model)
+fitlm_pr_cas <- glm(formula = form_pr_cas ,
+                    data = T_model_cas,
+                    family = poisson)
+fitlm_pr_reg <- glm(formula = form_pr_reg ,
+                    data = T_model_reg,
+                    family = poisson)
 ```
 
-**모형 2+1 평가**  
+**모형 평가**  
 
 ```{r}
-pred2_reg <- exp(predict(fit2_reg, newdata = V_model))-1
-pred2_cas <- exp(predict(fit2_cas, newdata = V_model))-1
-pred2_y <- pred2_reg + pred2_cas
+pred_cas <- predict(fitlm_pr_cas, newdata = V_model_cas)
+pred_reg <- predict(fitlm_pr_reg, newdata = V_model_reg)
 
-MSE_f2 <- mean((V_model$y-pred2_y)^2)
-RMSE_f2 <- sqrt(MSE_f2)
-list(MSE = MSE_f2, RMSE = RMSE_f2)
+MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
+MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
+
+RMSE_cas <- sqrt(MSE_cas)
+RMSE_reg <- sqrt(MSE_reg)
+list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
 
--> MSE : 8916, RMSE : 94를 기록.  
-
-**casual과 registered를 분할하지 않고, 바로 적합시킨 모형2(logtransform) 평가**  
-
-```{r}
-f2_y <- formula(log(y+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-fit2_y <- lm(formula = f2_y, data = T_model)
-pred2_real_y <- exp(predict(fit2_y, newdata = V_model))-1
-
-
-MSE_f2_real_y <- mean((V_model$y-pred2_real_y)^2)
-RMSE_f2_real_y <- sqrt(MSE_f2_real_y)
-list(MSE = MSE_f2_real_y, RMSE = RMSE_f2_real_y)
-```
-
--> MSE : 9269, RMSE : 96을 기록.  
--> Model2의 경우 분할하여 적합시키는게 정확하다.  
-
-**Model 3 fitting : Poisson regression**  
-
-```{r}
-f3_reg <- formula(registered ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-f3_cas <- formula(casual ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-f3_y <- formula(y ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-
-fit3_reg <- glm(formula = f3_reg ,
-               data = T_model,
-               family = poisson)
-fit3_cas <- glm(formula = f3_cas ,
-               data = T_model,
-               family = poisson)
-fit3_y <- glm(formula = f3_y ,
-               data = T_model,
-               family = poisson)
-```
-
-**모형 3+1 평가**  
-
-```{r}
-pred3_reg <- predict(fit3_reg, newdata = V_model)
-pred3_cas <- predict(fit3_cas, newdata = V_model)
-pred3_y <- pred3_reg + pred3_cas
-
-MSE_f3 <- mean((V_model$y-pred3_y)^2)
-RMSE_f3 <- sqrt(MSE_f3)
-list(MSE = MSE_f3, RMSE = RMSE_f3)
-```
-
--> MSE : 65309, RMSE : 255를 기록.  
-
-**모형 3 평가**  
-
-```{r}
-pred3_real_y <- predict(fit3_y, newdata = V_model)
-
-MSE_f3_real_y <- mean((V_model$y-pred3_real_y)^2)
-RMSE_f3_real_y <- sqrt(MSE_f3_real_y)
-list(MSE = MSE_f3_real_y, RMSE = RMSE_f3_real_y)
-```
-
--> MSE : 66600, RMSE : 258을 기록.  
+-> RMSE_cas : 59.4892, RMSE_reg : 210.4713  
 
 **Model 4 fitting : inflated poisson regression **  
 ```{r}
 #mat_f4 <- subset(T_model, select = c('season','workingday','weather','temp','atemp','humidity',
 #                                                        'windspeed','time','year','discomfort'))
 #fit4_reg <- zip.mod(T_model$y, mat_f4)
-fit4_reg <- zeroinfl(registered ~ 
-                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
-                     data = T_model)
-fit4_cas <- zeroinfl(casual ~ 
-                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
-                     data = T_model)
+
+N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+X_var <- setdiff(feature, N_var)
+
+form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
+form_zi_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+'), '|1'))
+
+fitlm_zi_cas <- zeroinfl(formula = form_zi_cas,
+                         data = T_model_cas)
+fitlm_zi_reg <- zeroinfl(formula = form_zi_reg,
+                         data = T_model_reg)
 #fit4_real_y <- zeroinfl(y ~ 
 #                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
 #                     data = T_model)
 ```
 
-**모형 4+1 평가**  
+**모형평가**  
 
 ```{r}
-pred4_reg <- predict(fit4_reg, newdata = V_model)
-pred4_cas <- predict(fit4_cas, newdata = V_model)
-pred4_y <- pred4_reg + pred4_cas
+pred_cas <- predict(fitlm_zi_cas, newdata = V_model_cas)
+pred_reg <- predict(fitlm_zi_reg, newdata = V_model_reg)
 
-MSE_f4 <- mean((V_model$y-pred4_y)^2)
-RMSE_f4 <- sqrt(MSE_f4)
-list(MSE = MSE_f4, RMSE = RMSE_f4)
+MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
+MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
+
+RMSE_cas <- sqrt(MSE_cas)
+RMSE_reg <- sqrt(MSE_reg)
+list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 ```
 
--> MSE : 7081, RMSE : 84를 기록.  
-
-**Model 4+2 : y값은 0이 존재하지 않으며, zero-inflated는 casual에서만 존재함.**  
-
-```{r}
-fit4_2_reg <- glm(casual ~ season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort,
-               data = T_model,
-               family = poisson)
-fit4_cas <- zeroinfl(casual ~ 
-                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
-                     data = T_model)
-```
--> table함수로 각 변수들의 min을 확인해 보면, casual에서 0이 압도적으로 많은 것을 확인할 수 있다.  
-
-
-**모형 4+2 평가**  
-
-```{r}
-pred4_2_reg <- predict(fit4_2_reg, newdata = V_model)
-pred4_cas <- predict(fit4_cas, newdata = V_model)
-pred4_2_y <- pred4_2_reg + pred4_cas
-
-MSE_f4_2 <- mean((V_model$y-pred4_2_y)^2)
-RMSE_f4_2 <- sqrt(MSE_f4_2)
-list(MSE = MSE_f4_2, RMSE = RMSE_f4_2)
-```
-
--> MSE : 47351, RMSE : 217을 기록.  
+-> RMSE_cas : 33.4605, RMSE_reg : 122.6731  
 
 **최종모형 적합**  
 
-평가결과 모형 4+1이 가장 우수한 것을 확인했으므로, 이를 학습데이터(train2)에 적용하여 최종파일을 생성하도록 한다.  
-**Final model_1 fitting**  
+평가결과 casual / registered 모두 Zero-inflated poission regression이 적합하다고 판단.
+
+**Final model fitting**  
 
 ```{r}
-fit_reg <- zeroinfl(registered ~ 
-                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
-                     data = train2)
-fit_cas <- zeroinfl(casual ~ 
-                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
-                     data = train2)
-pred_reg <- predict(fit_reg, newdata = test2)
-pred_cas <- predict(fit_cas, newdata = test2)
+N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 
+X_var <- setdiff(feature, N_var)
+
+form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
+form_zi_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+'), '|1'))
+
+final_model_cas <- zeroinfl(formula = form_zi_cas,
+                            data = train_baseline)
+final_model_reg <- zeroinfl(formula = form_zi_reg,
+                            data = train_baseline)
+
+pred_cas <- predict(final_model_cas, newdata = test_baseline)
+pred_reg <- predict(final_model_reg, newdata = test_baseline)
 pred_y <- pred_reg + pred_cas
 ```
   
-**Make sampleSubmission file with model 4+1** 
+**Make sampleSubmission file with Final model** 
 
 ```{r}
 sampleSubmission <- read.csv('sampleSubmission.csv', header = T)
 sampleSubmission$count <- pred_y
-write.csv(sampleSubmission, file = 'smapleSubmission_github.csv', row.names = FALSE)
+write.csv(sampleSubmission, file = 'sampleSubmission_github.csv', row.names = FALSE)
 ```
-  
-**Final model_2 fitting**  
-
-```{r}
-f2_reg <- formula(log(registered+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-f2_cas <- formula(log(casual+1) ~ season+workingday+weather+temp+atemp+humidity+windspeed+time+year+discomfort)
-fit_reg_2 <- lm(formula = f2_reg, data = train2)
-fit_cas_2 <- lm(formula = f2_cas, data = train2)
-
-pred_reg_2 <- exp(predict(fit_reg_2, newdata = test2))-1
-pred_cas_2 <- exp(predict(fit_cas_2, newdata = test2))-1
-pred_y_2 <- pred_reg_2 + pred_cas_2
-```
-  
-
-
-**Make sampleSubmission file with model 2+1**  
-
-```{r}
-sampleSubmission_2 <- read.csv('sampleSubmission.csv', header = T)
-sampleSubmission_2$count <- pred_y_2
-write.csv(sampleSubmission_2, file = 'smapleSubmission_github_2.csv', row.names = FALSE)
-```
-  
   
 ---  
 
