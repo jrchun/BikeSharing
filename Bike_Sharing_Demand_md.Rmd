@@ -215,7 +215,8 @@ ggplot(data = data, aes(x = season, y = y, color = season)) +
   geom_boxplot() +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by Season' ,
-       x = 'Season')
+       x = 'Season') +
+  theme(legend.position = 'none')
 ```
 
  -> 계절에 따라 y(count)의 값이 크게 변동은 없는 것을 확인할 수 있다.
@@ -240,7 +241,8 @@ D1 <- as.data.frame(table(data$holiday))
 ggplot(data = D1, aes(x = Var1, y = Freq, fill = Var1)) +
   geom_col() +
   labs(title = 'Bar plot of frequency',
-       subtitle = 'in Holiday variable') #+
+       subtitle = 'in Holiday variable') +
+  theme(legend.position = 'none')
   #stat_identity()
 ```
 
@@ -249,7 +251,8 @@ ggplot(data = data, aes(x = holiday, y = y, color = holiday)) +
   geom_boxplot() +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by holiday',
-       x = 'Holiday')# +
+       x = 'Holiday') +
+  theme(legend.position = 'none')
     #scale_x_discrete(labels = levels(data$holiday))
 
 ```
@@ -275,7 +278,8 @@ D1 <- as.data.frame(table(data$workingday))
 ggplot(data = D1, aes(x = Var1, y = Freq, fill = Var1)) +
   geom_col() +
   labs(title = 'Bar plot of frequency',
-       subtitle = 'in Workingday variable')
+       subtitle = 'in Workingday variable') +
+  theme(legend.position = 'none')
   #stat_identity()
 ```
 
@@ -288,7 +292,8 @@ ggplot(data = data) +
   geom_boxplot(aes(x = workingday, y = y, color = workingday)) +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by workingday',
-       x = 'workingday') #+
+       x = 'workingday') +
+  theme(legend.position = 'none')
     #scale_x_discrete(labels = levels(data$workingday))
 ```  
   
@@ -312,8 +317,8 @@ ggplot(data = data) +
   geom_boxplot(aes(x = weather, y = y, color = weather)) +
   labs(title = 'Boxplot of Data' ,
        subtitle = 'Grouped by weather',
-       x = 'weather') #+
-    #scale_x_discrete(labels = levels(data$weather))
+       x = 'weather') +
+  theme(legend.position = 'none')
 ```
 
 -> 범주 4의 치환이 필요함을 확인할 수 있고, 날씨에 따른 y의 변화를 확인할 수 있다.  
