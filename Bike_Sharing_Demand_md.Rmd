@@ -495,10 +495,8 @@ time <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 12, 13)
 day <- substr(sp[seq(from = 1, to = length(sp), by = 2)], 1, 10)
 day <- as.integer(gsub("-", "" , day, perl=TRUE))
 
-data$time <- as.integer(time)
+data$time <- factor(time, levels = c(0:23))
 data$day <- as.numeric(factor(rank(day))) #일시를 단순한 순서로 변경
-
-head(table(data$day), 20)
 ```
 
 
@@ -578,7 +576,23 @@ B <- ggplot(data = data, aes(x = month, y = casual, color = month)) +
 grid.arrange(A, B, nrow=2)
 ```
 
--> 일정한 추세 확인
+-> 일정한 추세 확인  
+
+
+**시간에 따른 차이**  
+
+```{r}
+A <- ggplot(data = data, aes(x = time, y = registered, color = time)) +
+  geom_boxplot() +
+  labs(title = 'Boxplot of registered in time')
+B <- ggplot(data = data, aes(x = time, y = casual, color = time)) +
+  geom_boxplot() +
+  labs(title = 'Boxplot of casual in time')
+
+grid.arrange(A, B, nrow=2)
+```
+
+-> 일정한 추세 확인  
 
 datetime변수 삭제  
 
@@ -713,7 +727,8 @@ tc_1 <- trainControl(method = 'repeatedcv',
 **method1 . ctree2 사용. **  
 
 ```{r}
-wind_model_tree <- train(f_1, method = 'ctree2',  trControl = tc_1, data = tr_wind) #ctree2는 maxdepth도 조절
+#ctree2는 maxdepth도 조절
+wind_model_tree <- train(f_1, method = 'ctree2',  trControl = tc_1, data = tr_wind) 
 plot(wind_model_tree$finalModel)
 wind_pre <- predict(wind_model_tree, newdata = val_wind)
 mean((wind_pre-val_wind$windspeed)^2)
