@@ -606,7 +606,7 @@ EDA과정에서 약간의 영향력을 확인했기 때문에, 따로 처리하�
 
 **Holiday**   
 
-위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다.
+위에서 확인한 boxplot을 확인해 보았을 때, 변수의 비율도 치우쳐있고 count에 큰 영향을 주는 것 같지 않다.  
 -> 지워버리자. workingday 데이터만 사용  
 
 
@@ -660,6 +660,7 @@ cor(num_data_2)
 # data <- subset(data, select = -c(temp, humidity))
 ```
 -> temp와 atemp, humidity, discomfort와의 correlation을 확인하고, 변수 처리방안을 고민한다.  
+
 -> 모형 적합 후에 삭제여부 검토  
 
 **windspeed**  
@@ -672,8 +673,9 @@ ggplot(data = data, aes(data$windspeed))+
      geom_histogram()
 ```
 
--> 0값이 상당히 많이 관측된 것을 확인할 수 있다. 이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음),  
-이를 대체할 방법을 찾는다.  
+-> 0값이 상당히 많이 관측된 것을 확인할 수 있다.  
+
+이는 실제 값이 아닌 NA값일 확률이 높으므로(구간이 비어져있음), 대체할 방법을 찾는다.  
 
 분포확인  
 ```{r}
@@ -825,8 +827,8 @@ ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24)
 ```{r}
 
 save.image(file='BikeEnv.RData')
-rm(list = ls())
-load('C:\\BikeEnv.RData')
+#rm(list = ls())
+#load('C:\\BikeEnv.RData')
 ```
 
 
@@ -875,6 +877,7 @@ mtext("lm casual", side = 3, line = -14, outer = TRUE)
 -> 정규성에 대한 가정을 위배한다. 종속변수의 변환이 필요하다는 것을 확인할 수 있다.  
 
 **Linear regression with Log-transformation**  
+
 각각의 종속변수는 0이상의 정수이므로 1을 더한뒤에 log변환을 시도한다.  
 
 ```{r}
@@ -899,12 +902,14 @@ mtext("Log transform lm casual", side = 3, line = -14, outer = TRUE)
 -> 변환 전에 비해, 종속변수의 정규성에 있어서 나아진 모습을 보인다.  
 
 **Interpretation of Regression**  
+
 Casual : 로그변환한 선형회귀모형
 ```{r}
 summary(fitlm_log_cas)
 ```
 
 -> R스퀘어가 0.59로 향상된 모습을 보인다.  
+
 -> 모든 변수가 유의하다는 것을 확인할 수 있다.  
 
 Registered : 로그변환한 선형회귀모형
@@ -913,6 +918,7 @@ summary(fitlm_log_reg)
 ```
 
 -> R스퀘어가 0.46로 향상된 모습을 보인다.  
+
 -> 모든 변수가 유의하다는 것을 확인할 수 있다.
 
 **Return to Data partition**  
@@ -935,6 +941,7 @@ V_model_reg <- train_baseline[-Caret_idx_reg, ]
 -> set.seed()함수를 사용하여 매 시행마다 같은 데이터셋을 활용할 수 있도록 고정시킨다.  
 
 **Linear regression(log transform) fitting**  
+
 직전 확인한대로, 선택한 변수들로 모형을 적합시킨다. (다중공선성과 가정을 고려한 변수선택)
 
 ```{r}
@@ -997,7 +1004,8 @@ list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
 
 -> RMSE_cas : 59.3863, RMSE_reg : 210.3224  
 
-**Zero Inflated poisson regression **  
+**Zero Inflated poisson regression**  
+
 ```{r}
 #mat_f4 <- subset(T_model, select = c('season','workingday','weather','temp','atemp','humidity',
 #                                                        'windspeed','time','year','discomfort'))
