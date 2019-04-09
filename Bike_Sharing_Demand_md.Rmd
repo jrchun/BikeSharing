@@ -94,6 +94,8 @@ library(corrplot) #for correlation plot
 library(dplyr)    #for %in% function
 library(caret)    #for cross validation
 library(pscl)     #for Zero-inflated poisson regression
+library(plm)     #for index function
+library(qcc)     #for overdispersion
 library(gridExtra)
 library(rpart) # train : CART
 library(party) #train : ctree
@@ -845,9 +847,8 @@ ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24)
 **Baseline 완성**  
 
 ```{r}
-
 save.image(file='BikeEnv.RData')
-#rm(list = ls())
+rm(list = ls())
 #load('C:\\BikeEnv.RData')
 ```
 
@@ -863,12 +864,13 @@ str(data_baseline)
 **Data preparing**  
 data_baseline, train_baseline, test_baseline 3종류의 데이터 준비완료
 ```{r}
-feature <- colnames(data_baseline)
+(feature <- colnames(data_baseline))
 ```
 
 **Linear regression**  
 
 ```{r}
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거
 X_var <- setdiff(feature, N_var)
 form_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+')))
@@ -901,6 +903,7 @@ mtext("lm casual", side = 3, line = -14, outer = TRUE)
 각각의 종속변수는 0이상의 정수이므로 1을 더한뒤에 log변환을 시도한다.  
 
 ```{r}
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'month', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거
 X_var <- setdiff(feature, N_var)
 form_log_reg <- as.formula(paste('log(registered+1)~', paste0(X_var, collapse = '+')))
@@ -960,11 +963,24 @@ V_model_reg <- train_baseline[-Caret_idx_reg, ]
 ```
 -> set.seed()함수를 사용하여 매 시행마다 같은 데이터셋을 활용할 수 있도록 고정시킨다.  
 
+**Define the lossfunction (RMSLE)**  
+과소평가된 항목에 패널티를 주는 RMSLE function : 작을수록 정확하다.  
+
+```{r}
+RMSLE_func <- function(pred, actual) {
+  rmsle <- sqrt(mean((log(pred+1)-log(actual+1))^2))
+  return(rmsle)
+}
+```
+
+
+
 **Linear regression(log transform) fitting**  
 
 직전 확인한대로, 선택한 변수들로 모형을 적합시킨다. (다중공선성과 가정을 고려한 변수선택)
 
 ```{r}
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
@@ -980,57 +996,64 @@ fitlm_log_reg <- lm(formula = form_log_reg, data = T_model_reg)
 
 ```{r}
 pred_cas <- exp(predict(fitlm_log_cas, newdata = V_model_cas))-1
+pred_cas[which(pred_cas < 0)] <- 0
 pred_reg <- exp(predict(fitlm_log_reg, newdata = V_model_reg))-1
+pred_reg[which(pred_reg < 0)] <- 0
 
-MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
-MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
-RMSE_cas <- sqrt(MSE_cas)
-RMSE_reg <- sqrt(MSE_reg)
-list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
+RMSLE_cas <- RMSLE_func(pred_cas, V_model_cas$casual)
+RMSLE_reg <- RMSLE_func(pred_reg, V_model_reg$registered)
+list(Casual = RMSLE_cas, Registered = RMSLE_reg)
 ```
 
--> RMSE_cas : 25.4308, RMSE_reg : 80.7288  
+-> Casual : 0.6165, Registered : 0.5831  
 
 **Poisson regression**  
 
 ```{r}
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
 form_pr_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+')))
 form_pr_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+')))
 
-fitlm_pr_cas <- glm(formula = form_pr_cas ,
+fitlm_pr_cas <- glm(formula = form_pr_cas,
                     data = T_model_cas,
                     family = poisson)
-fitlm_pr_reg <- glm(formula = form_pr_reg ,
+fitlm_pr_reg <- glm(formula = form_pr_reg,
                     data = T_model_reg,
                     family = poisson)
+
+#m1 <- glm.nb(formula = form_pr_cas,
+#                     data = T_model_cas)
+
+#f1 <- glm(formula = form_pr_cas,
+#          family = "quasipoisson",
+#          data = T_model_cas)
 ```
 
 **모형 평가**  
 
 ```{r}
+pred_cas <- predict(f1, newdata = V_model_cas)
 pred_cas <- predict(fitlm_pr_cas, newdata = V_model_cas)
+pred_cas[which(pred_cas < 0)] <- 0
 pred_reg <- predict(fitlm_pr_reg, newdata = V_model_reg)
+pred_reg[which(pred_reg < 0)] <- 0
 
-MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
-MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
-
-RMSE_cas <- sqrt(MSE_cas)
-RMSE_reg <- sqrt(MSE_reg)
-list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
+sqrt(mean((pred_cas - V_model_cas$casual)^2))
+RMSLE_cas <- RMSLE_func(pred_cas, V_model_cas$casual)
+RMSLE_reg <- RMSLE_func(pred_reg, V_model_reg$registered)
+list(Casual = RMSLE_cas, Registered = RMSLE_reg)
 ```
 
--> RMSE_cas : 59.3863, RMSE_reg : 210.3224  
+-> Casual : 1.8497, Registered : 2.9550  
+: 지나치게 값이 벗어난다.
 
 **Zero Inflated poisson regression**  
 
 ```{r}
-#mat_f4 <- subset(T_model, select = c('season','workingday','weather','temp','atemp','humidity',
-#                                                        'windspeed','time','year','discomfort'))
-#fit4_reg <- zip.mod(T_model$y, mat_f4)
-
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
@@ -1041,29 +1064,26 @@ fitlm_zi_cas <- zeroinfl(formula = form_zi_cas,
                          data = T_model_cas)
 fitlm_zi_reg <- zeroinfl(formula = form_zi_reg,
                          data = T_model_reg)
-#fit4_real_y <- zeroinfl(y ~ 
-#                       season + workingday + weather + temp + atemp + humidity + windspeed + time + year + discomfort|1, 
-#                     data = T_model)
 ```
 
 **모형평가**  
 
 ```{r}
 pred_cas <- predict(fitlm_zi_cas, newdata = V_model_cas)
+pred_cas[which(pred_cas < 0)] <- 0
 pred_reg <- predict(fitlm_zi_reg, newdata = V_model_reg)
+pred_reg[which(pred_reg < 0)] <- 0
 
-MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
-MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
-
-RMSE_cas <- sqrt(MSE_cas)
-RMSE_reg <- sqrt(MSE_reg)
-list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
+RMSLE_cas <- RMSLE_func(pred_cas, V_model_cas$casual)
+RMSLE_reg <- RMSLE_func(pred_reg, V_model_reg$registered)
+list(Casual = RMSLE_cas, Registered = RMSLE_reg)
 ```
 
--> RMSE_cas : 21.47525, RMSE_reg : 70.57711  
+-> Casual : 0.6457, Registered : 0.6221  
 
 **Ridge regression**
 ```{r}
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
@@ -1074,22 +1094,24 @@ tc <- trainControl(method = 'repeatedcv',
                    number = 5,
                    repeats = 3)
 
-fitrr_log_cas <- train(form_log_cas, method = 'ridge',  data = T_model_cas) #trControl = tc, 
-fitrr_log_reg <- train(form_log_reg, method = 'ridge',  data = T_model_reg) #trControl = tc, 
+fitrr_log_cas <- train(form_log_cas, method = 'ridge',  trControl = tc, data = T_model_cas)
+fitrr_log_reg <- train(form_log_reg, method = 'ridge',  trControl = tc, data = T_model_reg)
 ```
 
 **모형 평가**  
 
 ```{r}
-#pred_cas <- exp(predict(fitrl_log_cas, newdata = V_model_cas))-1
-#pred_reg <- exp(predict(fitrl_log_reg, newdata = V_model_reg))-1
+pred_cas <- exp(predict(fitrr_log_cas, newdata = V_model_cas))-1
+pred_cas[which(pred_cas < 0)] <- 0
+pred_reg <- exp(predict(fitrr_log_reg, newdata = V_model_reg))-1
+pred_reg[which(pred_reg < 0)] <- 0
 
-#MSE_cas <- mean((V_model_cas$casual-pred_cas)^2)
-#MSE_reg <- mean((V_model_reg$registered-pred_reg)^2)
-#RMSE_cas <- sqrt(MSE_cas)
-#RMSE_reg <- sqrt(MSE_reg)
-#list(RMSE_cas = RMSE_cas, RMSE_reg = RMSE_reg)
+RMSLE_cas <- RMSLE_func(pred_cas, V_model_cas$casual)
+RMSLE_reg <- RMSLE_func(pred_reg, V_model_reg$registered)
+list(Casual = RMSLE_cas, Registered = RMSLE_reg)
 ```
+
+-> Casual : 0.6165, Registered : 0.5831  
 
 **앙상블**
 ```{r}
@@ -1132,8 +1154,8 @@ fit_zi_reg <- zeroinfl(formula = form_zi_reg,
 pred_lm_cas <- exp(predict(fitlm_log_cas, newdata = V_model_cas))-1
 pred_lm_reg <- exp(predict(fitlm_log_reg, newdata = V_model_reg))-1
 
-#pred_rr_cas <- exp(predict(fitrr_log_cas, newdata = V_model_cas))-1
-#pred_rr_reg <- exp(predict(fitrr_log_reg, newdata = V_model_reg))-1
+pred_rr_cas <- exp(predict(fitrr_log_cas, newdata = V_model_cas))-1
+pred_rr_reg <- exp(predict(fitrr_log_reg, newdata = V_model_reg))-1
 
 pred_pr_cas <- predict(fit_pr_cas, newdata = V_model_cas)
 pred_pr_reg <- predict(fit_pr_reg, newdata = V_model_reg)
@@ -1141,31 +1163,25 @@ pred_pr_reg <- predict(fit_pr_reg, newdata = V_model_reg)
 pred_zi_cas <- predict(fit_zi_cas, newdata = V_model_cas)
 pred_zi_reg <- predict(fit_zi_reg, newdata = V_model_reg)
 
-ens_data_cas <- as.data.frame(cbind(pred_lm_cas, pred_pr_cas, pred_zi_cas, V_model_cas$casual)) # pred_rr_cas,
-ens_data_reg <- as.data.frame(cbind(pred_lm_reg, pred_pr_reg, pred_zi_reg, V_model_reg$registered)) # pred_rr_reg, 
+ens_data_cas <- as.data.frame(cbind(pred_lm_cas, pred_rr_cas, pred_pr_cas, pred_zi_cas, V_model_cas$casual))
+ens_data_reg <- as.data.frame(cbind(pred_lm_reg, pred_rr_reg, pred_pr_reg, pred_zi_reg, V_model_reg$registered))
 
-result_cas <- as.vector(apply(ens_data_cas, FUN = mean, MARGIN = 1))
-RMSE_cas <- sqrt(mean((V_model_cas$casual-result_cas)^2))
+ggplot(data = ens_data_reg, aes(x = index(ens_data_reg))) +
+  geom_point(y = ens_data_reg$pred_lm_reg, color= 'red') +
+  geom_point(y = ens_data_reg$pred_rr_reg, color= 'blue', alpha = 0.5) +
+  geom_point(y = ens_data_reg$pred_pr_reg, color= 'black', alpha = 0.5) +
+  geom_point(y = ens_data_reg$pred_zi_reg, color= 'green', alpha = 0.5) +
+  geom_line(y = V_model_reg$registered, alpha = 0.5) +
+  ylim(0, max(ens_data_reg[, 1:4]))
 
-result_reg <- as.vector(apply(ens_data_reg[,c(2:3)], FUN = mean, MARGIN = 1))
-RMSE_reg <- sqrt(mean((V_model_reg$registered-result_reg)^2))
-RMSE_reg
-
-RMSE_reg <- sqrt(mean((V_model_reg$registered-result_reg)^2))
-
-
-ggplot(data = ens_data_reg, aes(x = index(ens_data_reg), y = pred_pr_reg)) +
-  geom_point() +
-  geom_point(aes(x = index(ens_data_reg), y = V4, color = 'red')) #크고 작은 데이터들을 전혀 예측하지 못하네
-
-ggplot(data = ens_data_cas, aes(x = index(ens_data_cas), y = pred_pr_cas)) +
-  geom_point() +
-  geom_point(aes(x = index(ens_data_cas), y = V4, color = 'red')) #얼추 예측이 잘 되는 듯
+#ggplot(data = ens_data_cas, aes(x = index(ens_data_cas), y = pred_pr_cas)) +
+#  geom_point() +
+#  geom_point(aes(x = index(ens_data_cas), y = V4, color = 'red')) #얼추 예측이 잘 되는 듯
 ```
 
 **최종모형 적합**  
 
-평가결과 casual / registered 모두 Zero-inflated poission regression이 적합하다고 판단.
+평가결과 casual / registered 모두 어려운 모형보다 Ridge regression이 적합하다고 판단.
 
 **Final model fitting**  
 
@@ -1173,16 +1189,30 @@ ggplot(data = ens_data_cas, aes(x = index(ens_data_cas), y = pred_pr_cas)) +
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
-form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
-form_zi_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+'), '|1'))
+#form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
+#form_zi_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+'), '|1'))
 
-final_model_cas <- zeroinfl(formula = form_zi_cas,
-                            data = train_baseline)
-final_model_reg <- zeroinfl(formula = form_zi_reg,
-                            data = train_baseline)
+#final_model_cas <- zeroinfl(formula = form_zi_cas,
+#                            data = train_baseline)
+#final_model_reg <- zeroinfl(formula = form_zi_reg,
+#                            data = train_baseline)
 
-pred_cas <- predict(final_model_cas, newdata = test_baseline)
-pred_reg <- predict(final_model_reg, newdata = test_baseline)
+
+form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
+form_log_reg <- as.formula(paste('log(registered+1)~', paste0(X_var, collapse = '+')))
+
+tc <- trainControl(method = 'repeatedcv', 
+                   number = 5,
+                   repeats = 3)
+
+final_model_cas <- train(form_log_cas, method = 'ridge',  trControl = tc, data = train_baseline)
+final_model_reg <- train(form_log_reg, method = 'ridge',  trControl = tc, data = train_baseline)
+
+
+pred_cas <- exp(predict(final_model_cas, newdata = test_baseline))+1
+pred_cas[pred_cas<0] <- 0
+pred_reg <- exp(predict(final_model_reg, newdata = test_baseline))+1
+pred_reg[pred_reg<0] <- 0
 pred_y <- pred_reg + pred_cas
 ```
   
@@ -1198,5 +1228,4 @@ write.csv(sampleSubmission, file = 'sampleSubmission_github.csv', row.names = FA
 
 ## 한계점  
  
- 현재 점수는 WindSpeed(풍속) 변수의 0값이 많은 것을 적절한 값으로 채우지 못한 결과이다.  
-즉 EDA과정에서 누락된 부분이 존재하므로, 추후에 수정과정을 통하여 더 나은 결과를 얻어야 할 것이다.
+-> 어려운 모형 < Ridge regression의 아웃풋을 얻을 수 있다.
