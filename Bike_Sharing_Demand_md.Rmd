@@ -7,7 +7,7 @@ output:
     variant: markdown_github
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE,warning=FALSE,message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 Sys.setlocale('LC_ALL','C') #에러방지
 ```
@@ -86,7 +86,7 @@ Github에 업로드 하기 위하여 작성된 문서입니다.
 ### 데이터 구조 확인  
 **Initialize**  
 
-```{r}
+```{r,warning=FALSE,message=FALSE}
 
 rm(list=ls())
 library(ggplot2)  #for plotting
@@ -847,9 +847,9 @@ ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24)
 **Baseline 완성**  
 
 ```{r}
-save.image(file='BikeEnv.RData')
-rm(list = ls())
-#load('C:\\BikeEnv.RData')
+#save.image(file='BikeEnv.RData')
+#rm(list = ls())
+load('C:\\BikeEnv.RData')
 ```
 
 
@@ -1114,7 +1114,8 @@ list(Casual = RMSLE_cas, Registered = RMSLE_reg)
 -> Casual : 0.6165, Registered : 0.5831  
 
 **앙상블**
-```{r}
+```{r,warning=FALSE,message=FALSE}
+feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
 
@@ -1164,19 +1165,33 @@ pred_zi_cas <- predict(fit_zi_cas, newdata = V_model_cas)
 pred_zi_reg <- predict(fit_zi_reg, newdata = V_model_reg)
 
 ens_data_cas <- as.data.frame(cbind(pred_lm_cas, pred_rr_cas, pred_pr_cas, pred_zi_cas, V_model_cas$casual))
+names(ens_data_cas)[5] <- 'actual_cas'
 ens_data_reg <- as.data.frame(cbind(pred_lm_reg, pred_rr_reg, pred_pr_reg, pred_zi_reg, V_model_reg$registered))
+names(ens_data_reg)[5] <- 'actual_reg'
 
-ggplot(data = ens_data_reg, aes(x = index(ens_data_reg))) +
-  geom_point(y = ens_data_reg$pred_lm_reg, color= 'red') +
-  geom_point(y = ens_data_reg$pred_rr_reg, color= 'blue', alpha = 0.5) +
-  geom_point(y = ens_data_reg$pred_pr_reg, color= 'black', alpha = 0.5) +
-  geom_point(y = ens_data_reg$pred_zi_reg, color= 'green', alpha = 0.5) +
-  geom_line(y = V_model_reg$registered, alpha = 0.5) +
-  ylim(0, max(ens_data_reg[, 1:4]))
 
-#ggplot(data = ens_data_cas, aes(x = index(ens_data_cas), y = pred_pr_cas)) +
-#  geom_point() +
-#  geom_point(aes(x = index(ens_data_cas), y = V4, color = 'red')) #얼추 예측이 잘 되는 듯
+#앙상블모형 평가
+
+choice_2 <- combn(1:4, 2)
+choice_3 <- combn(1:4, 3)
+choice_4 <- combn(1:4, 4)
+X <- list(C_2 = choice_2,
+          C_3 = choice_3,
+          C_4 = choice_4)
+ens_data_cas1 <- ens_data_cas
+for (i in 1:length(X)) {
+  for (j in 1:ncol(X[[i]])) {
+    col_idx <- X[[i]][, j]
+    ens_data_cas1 <- cbind(ens_data_cas1, apply(ens_data_cas1[, col_idx], 1, mean))
+    colnames(ens_data_cas1)[ncol(ens_data_cas1)] <- paste0(X[[i]][, j], collapse = '_')
+  }
+}
+
+for (i in 6:ncol(ens_data_cas1)) {
+  cat(colnames(ens_data_cas1)[i], ' RMSLE = ', (RMSLE_func(ens_data_cas1[, i], ens_data_cas1$actual_cas)), '\n')
+}
+
+
 ```
 
 **최종모형 적합**  
@@ -1228,4 +1243,4 @@ write.csv(sampleSubmission, file = 'sampleSubmission_github.csv', row.names = FA
 
 ## 한계점  
  
--> 어려운 모형 < Ridge regression의 아웃풋을 얻을 수 있다.
+-> 복잡한 모형 < Ridge regression의 아웃풋을 얻을 수 있다.
