@@ -849,7 +849,23 @@ ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24)
 ```{r}
 #save.image(file='BikeEnv.RData')
 #rm(list = ls())
-load('C:\\BikeEnv.RData')
+#load('C:\\BikeEnv.RData')
+#setwd('C:\\github\\Project\\BikeSharing')
+#library(ggplot2)  #for plotting
+#library(corrplot) #for correlation plot
+#library(dplyr)    #for %in% function
+#library(caret)    #for cross validation
+#library(pscl)     #for Zero-inflated poisson regression
+#library(plm)     #for index function
+#library(qcc)     #for overdispersion
+#library(gridExtra)
+#library(rpart) # train : CART
+#library(party) #train : ctree
+#library(randomForest) # train : rf
+#library(e1071) #train : ranger(rf보다 빠른 속도)
+#library(ranger) #train : ranger(rf보다 빠른 속도)
+#library(elasticnet) #train : ridge
+#library(car) # for vif function(multicollinearity)
 ```
 
 
@@ -1113,7 +1129,7 @@ list(Casual = RMSLE_cas, Registered = RMSLE_reg)
 
 -> Casual : 0.6165, Registered : 0.5831  
 
-**앙상블**
+**앙상블 데이터 만들기**
 ```{r,warning=FALSE,message=FALSE}
 feature <- colnames(data_baseline)
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
@@ -1168,10 +1184,11 @@ ens_data_cas <- as.data.frame(cbind(pred_lm_cas, pred_rr_cas, pred_pr_cas, pred_
 names(ens_data_cas)[5] <- 'actual_cas'
 ens_data_reg <- as.data.frame(cbind(pred_lm_reg, pred_rr_reg, pred_pr_reg, pred_zi_reg, V_model_reg$registered))
 names(ens_data_reg)[5] <- 'actual_reg'
+```
 
+**앙상블모형 평가_cas**  
 
-#앙상블모형 평가
-
+```{r}
 choice_2 <- combn(1:4, 2)
 choice_3 <- combn(1:4, 3)
 choice_4 <- combn(1:4, 4)
@@ -1188,11 +1205,36 @@ for (i in 1:length(X)) {
 }
 
 for (i in 6:ncol(ens_data_cas1)) {
-  cat(colnames(ens_data_cas1)[i], ' RMSLE = ', (RMSLE_func(ens_data_cas1[, i], ens_data_cas1$actual_cas)), '\n')
+  cat(colnames(ens_data_cas1)[i], ' RMSLE of cas = ', (RMSLE_func(ens_data_cas1[, i], ens_data_cas1$actual_cas)), '\n')
+}
+```
+
+**앙상블모형 평가_reg**  
+
+```{r}
+choice_2 <- combn(1:4, 2)
+choice_3 <- combn(1:4, 3)
+choice_4 <- combn(1:4, 4)
+X <- list(C_2 = choice_2,
+          C_3 = choice_3,
+          C_4 = choice_4)
+
+ens_data_reg1 <- ens_data_reg
+for (i in 1:length(X)) {
+  for (j in 1:ncol(X[[i]])) {
+    col_idx <- X[[i]][, j]
+    ens_data_reg1 <- cbind(ens_data_reg1, apply(ens_data_reg1[, col_idx], 1, mean))
+    colnames(ens_data_reg1)[ncol(ens_data_reg1)] <- paste0(X[[i]][, j], collapse = '_')
+  }
 }
 
+for (i in 6:ncol(ens_data_reg1)) {
+  cat(colnames(ens_data_reg1)[i], ' RMSLE of reg= ', (RMSLE_func(ens_data_reg1[, i], ens_data_reg1$actual_reg)), '\n')
+}
 
 ```
+  
+-> 두 변수 모두에서 앙상블이 큰 힘을 발휘하지 못한다. : Regression model간의 앙상블이기때문.  
 
 **최종모형 적합**  
 
