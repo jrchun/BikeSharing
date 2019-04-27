@@ -462,7 +462,7 @@ grid.arrange(A, B, nrow = 2)
 
 | 변수명 | 특징 | 전처리 방법 |
 |-------|------|-------------|
-| Datetime | 각 월의 20일 이후의 정보를 예측해야하며, 시계열성을 확인했다.| Lag변수를 만든다. |
+| Datetime | 각 월의 20일 이후의 정보를 예측해야하며, 시간에 따른 차이를 확인했다.| 시간변수 생성 |
 | Season | 종속변수와의 큰 연관성을 찾을 수 없었다.  | X |
 | Holiday | 두 범주값의 비율이 매우 비대칭이며, 종속변수와의 큰 연관성은 보이지 않는다. | X |
 | Workingday | 종속변수와의 큰 연관성을 찾을 수 없었다. | X |
@@ -482,18 +482,10 @@ grid.arrange(A, B, nrow = 2)
 - 시간대별로 다른 대여수? 버리고 싶지만, 시간대별로 온도가 너무 다르다.  
 
 -> 시간대 별로 morning, afternoon, night, dawn 으로 나눠서 파생변수를 만들고 date time을 지우면 어떨까?    
-너무 많은 정보의 삭제가 우려된다. 각 시간을 범주형으로 살리고, lag 변수를 만들어서 파생변수로 사용해보자.  
+너무 많은 정보의 삭제가 우려된다. 각 시간을 범주형으로 살리자.  
 
 **시간 분할해서 plot그려보기.**  
 
-```{r}
-#sp <- unlist(strsplit(data$datetime, " "))
-#시간 추출
-#time <- sp[seq(from = 1, to = length(sp), by = 2)]
-#table(time)
-```
-
-시간 분할
 ```{r}
 sp <- unlist(strsplit(data$datetime, ":"))
 #시간 추출
@@ -505,7 +497,6 @@ day <- as.integer(gsub("-", "" , day, perl=TRUE))
 data$time <- factor(time, levels = c(0:23))
 data$day <- as.numeric(factor(rank(day))) #일시를 단순한 순서로 변경
 ```
-
 
 
 ```{r}
@@ -609,18 +600,6 @@ data <- subset(data, select = -c(datetime))
 
 -> datetime에서 일자를 사용하지 않는이유 : test와 train의 일자가 모두 다르기 때문.  
 
-**Lagvariable in day**  
-Lag변수에서 사용할 수 있는 변수를 선택한다. 
-
-```{r}
-#ggplot(data = data, aes(x = day, y = temp)) +
-#  geom_point()
-
-
-```
-
--> 문제점 발견! 1차 모델링 이후에 해결법 확인하기  
-
 **season**  
 
 EDA과정에서 약간의 영향력을 확인했기 때문에, 따로 처리하지 않도록 한다.  
@@ -677,8 +656,6 @@ data$discomfort <- discomfort
 ```{r}
 num_data_2 <- data[which(!is.na(data$y)), c('temp', 'atemp', 'humidity', 'windspeed','discomfort', 'y')]
 cor(num_data_2)
-
-# data <- subset(data, select = -c(temp, humidity))
 ```
 -> temp와 atemp, humidity, discomfort와의 correlation을 확인하고, 변수 처리방안을 고민한다.  
 
@@ -822,52 +799,11 @@ test_wind$windspeed <- round(wind_pre, digits = 4) #4자리수까지 반올림 �
 data_baseline <- rbind(test_wind, train_wind)
 ```
 
-
-**Lag변수**  
-
 ```{r}
-#make new train / test data
-data_baseline <- data_baseline[order(data_baseline$day, data_baseline$time), ] #order df with day & time
-train_baseline <- data_baseline[!is.na(data_baseline$y), ]
-test_baseline <- data_baseline[is.na(data_baseline$y), ]
-#How can I make a lag Variable?
-length(table(train_baseline$day)) * 24 - nrow(train_baseline) #58개의 NA를 갖는 time
-length(table(test_baseline$day)) * 24 - nrow(test_baseline) # 107개의 NA를 갖는 time
-#lag 변수를 만든뒤, merge를 진행하면? 165개의 추가 NA값이 생긴다. 
-# -> lag변수에서 사용할 변수를 신중하게 선택해야 한다.
+load('C:\\BikeEnv.Rdata')
 ```
-
-```{r}
-ggplot(data = data_baseline, aes(x = (data_baseline$day + data_baseline$time/24), y = temp)) +
-  geom_point(size = 0.3)
-```
-
--> Lag변수 제외한 채로, 모형적합해보기.
 
 **Baseline 완성**  
-
-```{r}
-#save.image(file='BikeEnv.RData')
-#rm(list = ls())
-#load('C:\\BikeEnv.RData')
-#setwd('C:\\github\\Project\\BikeSharing')
-#library(ggplot2)  #for plotting
-#library(corrplot) #for correlation plot
-#library(dplyr)    #for %in% function
-#library(caret)    #for cross validation
-#library(pscl)     #for Zero-inflated poisson regression
-#library(plm)     #for index function
-#library(qcc)     #for overdispersion
-#library(gridExtra)
-#library(rpart) # train : CART
-#library(party) #train : ctree
-#library(randomForest) # train : rf
-#library(e1071) #train : ranger(rf보다 빠른 속도)
-#library(ranger) #train : ranger(rf보다 빠른 속도)
-#library(elasticnet) #train : ridge
-#library(car) # for vif function(multicollinearity)
-```
-
 
 ---  
 
@@ -1039,19 +975,11 @@ fitlm_pr_cas <- glm(formula = form_pr_cas,
 fitlm_pr_reg <- glm(formula = form_pr_reg,
                     data = T_model_reg,
                     family = poisson)
-
-#m1 <- glm.nb(formula = form_pr_cas,
-#                     data = T_model_cas)
-
-#f1 <- glm(formula = form_pr_cas,
-#          family = "quasipoisson",
-#          data = T_model_cas)
 ```
 
 **모형 평가**  
 
 ```{r}
-pred_cas <- predict(f1, newdata = V_model_cas)
 pred_cas <- predict(fitlm_pr_cas, newdata = V_model_cas)
 pred_cas[which(pred_cas < 0)] <- 0
 pred_reg <- predict(fitlm_pr_reg, newdata = V_model_reg)
@@ -1245,15 +1173,6 @@ for (i in 6:ncol(ens_data_reg1)) {
 ```{r}
 N_var <- c('y', 'casual', 'registered', 'season', 'year', 'temp', 'atemp') # 다중공선성을 고려한 변수 제거 'month',
 X_var <- setdiff(feature, N_var)
-
-#form_zi_cas <- as.formula(paste('casual~', paste0(X_var, collapse = '+'), '|1'))
-#form_zi_reg <- as.formula(paste('registered~', paste0(X_var, collapse = '+'), '|1'))
-
-#final_model_cas <- zeroinfl(formula = form_zi_cas,
-#                            data = train_baseline)
-#final_model_reg <- zeroinfl(formula = form_zi_reg,
-#                            data = train_baseline)
-
 
 form_log_cas <- as.formula(paste('log(casual+1)~', paste0(X_var, collapse = '+')))
 form_log_reg <- as.formula(paste('log(registered+1)~', paste0(X_var, collapse = '+')))
